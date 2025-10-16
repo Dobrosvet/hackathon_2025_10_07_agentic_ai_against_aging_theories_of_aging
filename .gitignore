@@ -1,0 +1,21 @@
+.env
+.venv
+.$*.bkp
+.$*.dtmp
+.mypy_cache
+
+__pycache__/
+
+personal_folder/
+data/
+
+# Временные файлы
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/

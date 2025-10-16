@@ -1,0 +1,2 @@
+minio/minio.exe filter=lfs diff=lfs merge=lfs -text
+qdrant/qdrant.exe filter=lfs diff=lfs merge=lfs -text
