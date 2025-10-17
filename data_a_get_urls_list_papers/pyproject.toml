@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "data-a-get-urls-list-papers"
+version = "0.1.0"
+description = "PubMed Central data fetcher microservice"
+authors = ["Dobrosvet <dimaprokofev@yandex.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.119.0"
+uvicorn = {extras = ["standard"], version = "^0.37.0"}
+websockets = "^15.0.1"
+httpx = "^0.28.1"
+biopython = "^1.85"
+qdrant-client = "^1.15.1"
+python-multipart = "^0.0.20"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

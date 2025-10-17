@@ -1,15 +1,11 @@
+# Environment
 .env
 .venv
-.$*.bkp
-.$*.dtmp
-.mypy_cache
+venv/
+env/
 
+# Python
 __pycache__/
-
-personal_folder/
-data/
-
-# Временные файлы
 *.pyc
 *.pyo
 *.pyd
@@ -19,3 +15,48 @@ data/
 *.egg-info/
 dist/
 build/
+.mypy_cache
+.pytest_cache
+
+# Poetry
+poetry.lock
+
+# Data and logs
+personal_folder/
+data/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Backup files
+.$*.bkp
+.$*.dtmp
+*.bak
+*.backup
+
+# Build outputs
+dist/
+build/
+*.bundle.js
+*.bundle.css
+
+# Running services PID file
+.running_services.json
+
+# Qdrant data
+qdrant/storage/
+qdrant/.qdrant-initialized
+
+# Qdrant Web UI dist files
+dist-qdrant/

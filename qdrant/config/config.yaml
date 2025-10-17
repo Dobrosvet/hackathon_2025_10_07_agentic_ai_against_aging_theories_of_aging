@@ -1,0 +1,13 @@
+service:
+  host: 0.0.0.0
+  http_port: 6333
+  grpc_port: 6334
+
+storage:
+  # Path to storage directory
+  storage_path: ./storage
+
+# Enable web UI
+# The static files should be in the directory specified below
+# If not set, web UI is disabled
+static_content_path: ../dist-qdrant/dist
