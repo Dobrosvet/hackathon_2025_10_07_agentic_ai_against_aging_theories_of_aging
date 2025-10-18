@@ -14,6 +14,12 @@ function App() {
         apiUrl="http://127.0.0.1:8002/api"
       />
 
+      <ServiceMonitor
+        name="Full Text Downloader"
+        wsUrl="ws://127.0.0.1:8003/ws"
+        apiUrl="http://127.0.0.1:8003/api"
+      />
+
       {/* Add more services here as needed */}
     </div>
   )

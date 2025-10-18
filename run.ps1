@@ -23,6 +23,20 @@ function Stop-SavedServices {
                 } catch {}
             }
 
+            if ($pids.microserviceA) {
+                try {
+                    Stop-Process -Id $pids.microserviceA -Force -ErrorAction SilentlyContinue
+                    Write-Host "  - Stopped microservice A (PID: $($pids.microserviceA))" -ForegroundColor Gray
+                } catch {}
+            }
+
+            if ($pids.microserviceB) {
+                try {
+                    Stop-Process -Id $pids.microserviceB -Force -ErrorAction SilentlyContinue
+                    Write-Host "  - Stopped microservice B (PID: $($pids.microserviceB))" -ForegroundColor Gray
+                } catch {}
+            }
+
             if ($pids.client) {
                 try {
                     Stop-Process -Id $pids.client -Force -ErrorAction SilentlyContinue
@@ -118,7 +132,8 @@ Write-Host "Cleaning up existing services..." -ForegroundColor Cyan
 Stop-SavedServices
 
 # Stop by port
-Stop-ProcessOnPort 8002  # Microservice
+Stop-ProcessOnPort 8002  # Microservice A (URLs)
+Stop-ProcessOnPort 8003  # Microservice B (Full texts)
 Stop-ProcessOnPort 5173  # Client
 Stop-ProcessOnPort 6333  # Qdrant HTTP
 Stop-ProcessOnPort 6334  # Qdrant gRPC
@@ -158,12 +173,23 @@ $webUIProcess = Start-Process -FilePath "python" `
 
 Start-Sleep -Seconds 2
 
-# Start Microservice
-Write-Host "  - Starting PubMed Data Fetcher..." -ForegroundColor Green
-$microservicePath = "$ScriptDir\data_a_get_urls_list_papers"
-$microserviceProcess = Start-Process -FilePath "poetry" `
+# Start Microservice A - URLs Fetcher
+Write-Host "  - Starting PubMed URLs Fetcher..." -ForegroundColor Green
+$microserviceAPath = "$ScriptDir\data_a_get_urls_list_papers"
+$microserviceAProcess = Start-Process -FilePath "poetry" `
     -ArgumentList "run", "python", "main.py" `
-    -WorkingDirectory $microservicePath `
+    -WorkingDirectory $microserviceAPath `
+    -PassThru `
+    -WindowStyle Hidden
+
+Start-Sleep -Seconds 3
+
+# Start Microservice B - Full Text Downloader
+Write-Host "  - Starting Full Text Downloader..." -ForegroundColor Green
+$microserviceBPath = "$ScriptDir\data_b_get_full_texts"
+$microserviceBProcess = Start-Process -FilePath "poetry" `
+    -ArgumentList "run", "python", "main.py" `
+    -WorkingDirectory $microserviceBPath `
     -PassThru `
     -WindowStyle Hidden
 
@@ -184,7 +210,8 @@ Start-Sleep -Seconds 2
 $pids = @{
     qdrant = $qdrantProcess.Id
     webui = $webUIProcess.Id
-    microservice = $microserviceProcess.Id
+    microserviceA = $microserviceAProcess.Id
+    microserviceB = $microserviceBProcess.Id
     client = $clientProcess.Id
     timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
 }
@@ -197,12 +224,14 @@ Write-Host ""
 Write-Host "Process IDs:" -ForegroundColor Yellow
 Write-Host "  - Qdrant Server PID: $($qdrantProcess.Id)" -ForegroundColor White
 Write-Host "  - Qdrant Web UI PID: $($webUIProcess.Id)" -ForegroundColor White
-Write-Host "  - Microservice PID: $($microserviceProcess.Id)" -ForegroundColor White
+Write-Host "  - Microservice A (URLs) PID: $($microserviceAProcess.Id)" -ForegroundColor White
+Write-Host "  - Microservice B (Full Texts) PID: $($microserviceBProcess.Id)" -ForegroundColor White
 Write-Host "  - Client PID: $($clientProcess.Id)" -ForegroundColor White
 Write-Host ""
 Write-Host "Access points:" -ForegroundColor Yellow
 Write-Host "  - Client Dashboard: http://localhost:5173" -ForegroundColor White
-Write-Host "  - PubMed API: http://127.0.0.1:8002" -ForegroundColor White
+Write-Host "  - PubMed URLs API: http://127.0.0.1:8002" -ForegroundColor White
+Write-Host "  - Full Text API: http://127.0.0.1:8003" -ForegroundColor White
 Write-Host "  - Qdrant Dashboard: http://localhost:8080" -ForegroundColor White
 Write-Host "  - Qdrant API: http://localhost:6333" -ForegroundColor White
 Write-Host ""

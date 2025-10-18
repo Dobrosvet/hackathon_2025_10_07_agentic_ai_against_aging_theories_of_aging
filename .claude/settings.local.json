@@ -13,7 +13,15 @@
       "Bash(powershell:*)",
       "Bash(curl:*)",
       "Bash(./qdrant.exe:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(dir:*)",
+      "Bash(poetry --version:*)",
+      "Bash(poetry install:*)",
+      "Bash(poetry env info:*)",
+      "Bash(poetry env use:*)",
+      "Bash(\"..\\data_a_get_urls_list_papers\\.venv\\Scripts\\python.exe\" main.py)",
+      "Bash(tasklist:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []
