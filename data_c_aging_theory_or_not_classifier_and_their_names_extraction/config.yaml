@@ -1,0 +1,54 @@
+# Конфигурация Aging Theory Classifier Service
+
+# Режим классификации
+classifier:
+  # Режимы: "keyword" | "bioformer" | "hybrid"
+  # keyword - только keyword matching (быстро, ~100 статей/сек)
+  # bioformer - только Bioformer-8L (точно, ~5-50 статей/сек)
+  # hybrid - гибридный подход (оптимально, ~30-80 статей/сек)
+  mode: "keyword"  # Начинаем с keyword для совместимости
+
+  # GPU настройки
+  use_gpu: true  # Использовать GPU если доступен
+  quantize: false  # Использовать int8 quantization для ускорения
+
+  # Параметры классификации
+  bioformer_threshold: 0.6  # Порог similarity для Bioformer
+  confidence_threshold: 0.5  # Минимальная уверенность для классификации
+
+  # Batch processing
+  batch_size: 32  # Размер батча для GPU обработки
+  max_workers: 2  # Количество CPU worker'ов
+
+# База данных теорий
+theories:
+  count: 30  # Количество теорий в базе
+  auto_expand: false  # Автоматически искать вариации названий
+  min_pattern_length: 3  # Минимальная длина паттерна (символов)
+
+# Производительность
+performance:
+  max_text_length: 10000  # Максимальная длина текста (символов)
+  sliding_window_size: 512  # Размер окна для длинных текстов (токены)
+  sliding_window_stride: 256  # Шаг окна (токены)
+  cache_embeddings: true  # Кэшировать embeddings теорий
+
+# Qdrant настройки
+qdrant:
+  host: "localhost"
+  port: 6333
+  collection_name: "pubmed_papers"
+  batch_size: 10  # Размер батча для сохранения в Qdrant
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG | INFO | WARNING | ERROR
+  save_to_file: true
+  log_file: "data/logs/classifier.log"
+
+# API настройки
+api:
+  host: "127.0.0.1"
+  port: 8004
+  reload: false  # Auto-reload при изменении кода
+  workers: 1  # Количество uvicorn worker'ов

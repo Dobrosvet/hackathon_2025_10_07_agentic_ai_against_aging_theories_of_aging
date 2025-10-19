@@ -44,10 +44,13 @@ export const ServiceMonitor: React.FC<ServiceMonitorProps> = ({ name, wsUrl, api
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
+  const logsContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll logs to bottom
+  // Auto-scroll logs to bottom (only within container, not the whole page)
   const scrollToBottom = () => {
-    logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (logsContainerRef.current) {
+      logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
@@ -62,6 +65,8 @@ export const ServiceMonitor: React.FC<ServiceMonitorProps> = ({ name, wsUrl, api
       ws.onopen = () => {
         console.log(`Connected to ${name} WebSocket`);
         setConnected(true);
+        // Clear logs on reconnect to avoid duplicates
+        setLogs([]);
       };
 
       ws.onmessage = (event) => {
@@ -72,7 +77,7 @@ export const ServiceMonitor: React.FC<ServiceMonitorProps> = ({ name, wsUrl, api
         } else if (message.type === 'state') {
           setState(message.data);
         } else if (message.type === 'logs') {
-          // Initial logs batch
+          // Initial logs batch - replace existing logs
           setLogs(message.data);
         }
       };
@@ -172,15 +177,17 @@ export const ServiceMonitor: React.FC<ServiceMonitorProps> = ({ name, wsUrl, api
           }} />
         </div>
 
-        <div style={{
-          height: '500px',
-          overflowY: 'auto',
-          backgroundColor: '#111827',
-          padding: '10px',
-          borderRadius: '4px',
-          fontFamily: 'monospace',
-          fontSize: '12px'
-        }}>
+        <div
+          ref={logsContainerRef}
+          style={{
+            height: '500px',
+            overflowY: 'auto',
+            backgroundColor: '#111827',
+            padding: '10px',
+            borderRadius: '4px',
+            fontFamily: 'monospace',
+            fontSize: '12px'
+          }}>
           {logs.map((log, index) => (
             <div key={index} style={{ marginBottom: '4px' }}>
               <span style={{ color: '#6b7280' }}>

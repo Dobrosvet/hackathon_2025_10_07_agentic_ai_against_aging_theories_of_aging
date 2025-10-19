@@ -1,9 +1,10 @@
 import './App.css'
 import { ServiceMonitor } from './components/ServiceMonitor'
+import { TheoryHighlightViewer } from './components/TheoryHighlightViewer'
 
 function App() {
   return (
-    <div style={{ padding: '20px', maxWidth: '1800px', margin: '0 auto' }}>
+    <div style={{ padding: '20px', maxWidth: '100%', margin: '0 auto' }}>
       <h1 style={{ marginBottom: '30px', color: '#f3f4f6' }}>
         Microservices Dashboard
       </h1>
@@ -18,6 +19,12 @@ function App() {
         name="Full Text Downloader"
         wsUrl="ws://127.0.0.1:8003/ws"
         apiUrl="http://127.0.0.1:8003/api"
+      />
+
+      <TheoryHighlightViewer
+        name="Aging Theory Classifier & NER"
+        wsUrl="ws://127.0.0.1:8004/ws"
+        apiUrl="http://127.0.0.1:8004/api"
       />
 
       {/* Add more services here as needed */}

@@ -37,6 +37,13 @@ function Stop-SavedServices {
                 } catch {}
             }
 
+            if ($pids.microserviceC) {
+                try {
+                    Stop-Process -Id $pids.microserviceC -Force -ErrorAction SilentlyContinue
+                    Write-Host "  - Stopped microservice C (PID: $($pids.microserviceC))" -ForegroundColor Gray
+                } catch {}
+            }
+
             if ($pids.client) {
                 try {
                     Stop-Process -Id $pids.client -Force -ErrorAction SilentlyContinue
@@ -134,6 +141,7 @@ Stop-SavedServices
 # Stop by port
 Stop-ProcessOnPort 8002  # Microservice A (URLs)
 Stop-ProcessOnPort 8003  # Microservice B (Full texts)
+Stop-ProcessOnPort 8004  # Microservice C (Classifier)
 Stop-ProcessOnPort 5173  # Client
 Stop-ProcessOnPort 6333  # Qdrant HTTP
 Stop-ProcessOnPort 6334  # Qdrant gRPC
@@ -195,6 +203,38 @@ $microserviceBProcess = Start-Process -FilePath "poetry" `
 
 Start-Sleep -Seconds 3
 
+# Start Microservice C - Aging Theory Classifier
+Write-Host "  - Starting Aging Theory Classifier..." -ForegroundColor Green
+$microserviceCPath = "$ScriptDir\data_c_aging_theory_or_not_classifier_and_their_names_extraction"
+
+# Check and install dependencies for microservice C if needed
+Write-Host "    Checking dependencies for Classifier..." -ForegroundColor Gray
+$venvPython = "$microserviceCPath\.venv\Scripts\python.exe"
+
+if (Test-Path $venvPython) {
+    # Check if PyYAML is installed
+    $yamlCheck = & $venvPython -c "import yaml" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "    Installing PyYAML..." -ForegroundColor Yellow
+        & $venvPython -m pip install -q pyyaml
+    }
+
+    # Check if websockets is installed
+    $wsCheck = & $venvPython -c "import websockets" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "    Installing websockets..." -ForegroundColor Yellow
+        & $venvPython -m pip install -q websockets
+    }
+}
+
+$microserviceCProcess = Start-Process -FilePath "poetry" `
+    -ArgumentList "run", "python", "main.py" `
+    -WorkingDirectory $microserviceCPath `
+    -PassThru `
+    -WindowStyle Hidden
+
+Start-Sleep -Seconds 3
+
 # Start Client
 Write-Host "  - Starting Client Dashboard..." -ForegroundColor Green
 $clientPath = "$ScriptDir\client"
@@ -212,6 +252,7 @@ $pids = @{
     webui = $webUIProcess.Id
     microserviceA = $microserviceAProcess.Id
     microserviceB = $microserviceBProcess.Id
+    microserviceC = $microserviceCProcess.Id
     client = $clientProcess.Id
     timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
 }
@@ -226,12 +267,14 @@ Write-Host "  - Qdrant Server PID: $($qdrantProcess.Id)" -ForegroundColor White
 Write-Host "  - Qdrant Web UI PID: $($webUIProcess.Id)" -ForegroundColor White
 Write-Host "  - Microservice A (URLs) PID: $($microserviceAProcess.Id)" -ForegroundColor White
 Write-Host "  - Microservice B (Full Texts) PID: $($microserviceBProcess.Id)" -ForegroundColor White
+Write-Host "  - Microservice C (Classifier) PID: $($microserviceCProcess.Id)" -ForegroundColor White
 Write-Host "  - Client PID: $($clientProcess.Id)" -ForegroundColor White
 Write-Host ""
 Write-Host "Access points:" -ForegroundColor Yellow
 Write-Host "  - Client Dashboard: http://localhost:5173" -ForegroundColor White
 Write-Host "  - PubMed URLs API: http://127.0.0.1:8002" -ForegroundColor White
 Write-Host "  - Full Text API: http://127.0.0.1:8003" -ForegroundColor White
+Write-Host "  - Classifier API: http://127.0.0.1:8004" -ForegroundColor White
 Write-Host "  - Qdrant Dashboard: http://localhost:8080" -ForegroundColor White
 Write-Host "  - Qdrant API: http://localhost:6333" -ForegroundColor White
 Write-Host ""
