@@ -13,7 +13,7 @@ from pmc_text_fetcher import PMCTextFetcher
 from qdrant_storage import QdrantStorage
 
 # Setup paths
-DATA_DIR = Path("./data")
+DATA_DIR = Path(__file__).parent.parent / "data"
 DB_DIR = DATA_DIR / "db"
 LOGS_DIR = DATA_DIR / "logs"
 

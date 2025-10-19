@@ -51,6 +51,13 @@ function Stop-SavedServices {
                 } catch {}
             }
 
+            if ($pids.microserviceX) {
+                try {
+                    Stop-Process -Id $pids.microserviceX -Force -ErrorAction SilentlyContinue
+                    Write-Host "  - Stopped microservice X (PID: $($pids.microserviceX))" -ForegroundColor Gray
+                } catch {}
+            }
+
             if ($pids.client) {
                 try {
                     Stop-Process -Id $pids.client -Force -ErrorAction SilentlyContinue
@@ -150,6 +157,7 @@ Stop-ProcessOnPort 8002  # Microservice A (URLs)
 Stop-ProcessOnPort 8003  # Microservice B (Full texts)
 Stop-ProcessOnPort 8004  # Microservice C (Classifier)
 Stop-ProcessOnPort 8005  # Microservice D (Questions Classifier)
+Stop-ProcessOnPort 8006  # Microservice X (DB Viewer & Export)
 Stop-ProcessOnPort 5173  # Client
 Stop-ProcessOnPort 6333  # Qdrant HTTP
 Stop-ProcessOnPort 6334  # Qdrant gRPC
@@ -294,6 +302,29 @@ $microserviceDProcess = Start-Process -FilePath "poetry" `
 
 Start-Sleep -Seconds 5
 
+# Start Microservice X - Database Viewer & Export
+Write-Host "  - Starting Database Viewer & Export..." -ForegroundColor Green
+$microserviceXPath = "$ScriptDir\data_x_view_db_and_export_to_tables"
+
+# Check if dependencies are installed
+Write-Host "    Checking dependencies for Database Viewer..." -ForegroundColor Gray
+$lockFileX = "$microserviceXPath\poetry.lock"
+
+if (-not (Test-Path $lockFileX)) {
+    Write-Host "    Installing dependencies (first time setup)..." -ForegroundColor Yellow
+    Push-Location $microserviceXPath
+    & poetry install --no-root 2>&1 | Out-Null
+    Pop-Location
+}
+
+$microserviceXProcess = Start-Process -FilePath "poetry" `
+    -ArgumentList "run", "python", "main.py" `
+    -WorkingDirectory $microserviceXPath `
+    -PassThru `
+    -WindowStyle Hidden
+
+Start-Sleep -Seconds 3
+
 # Start Client
 Write-Host "  - Starting Client Dashboard..." -ForegroundColor Green
 $clientPath = "$ScriptDir\client"
@@ -313,6 +344,7 @@ $pids = @{
     microserviceB = $microserviceBProcess.Id
     microserviceC = $microserviceCProcess.Id
     microserviceD = $microserviceDProcess.Id
+    microserviceX = $microserviceXProcess.Id
     client = $clientProcess.Id
     timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
 }
@@ -329,6 +361,7 @@ Write-Host "  - Microservice A (URLs) PID: $($microserviceAProcess.Id)" -Foregro
 Write-Host "  - Microservice B (Full Texts) PID: $($microserviceBProcess.Id)" -ForegroundColor White
 Write-Host "  - Microservice C (Classifier) PID: $($microserviceCProcess.Id)" -ForegroundColor White
 Write-Host "  - Microservice D (Questions) PID: $($microserviceDProcess.Id)" -ForegroundColor White
+Write-Host "  - Microservice X (DB Viewer) PID: $($microserviceXProcess.Id)" -ForegroundColor White
 Write-Host "  - Client PID: $($clientProcess.Id)" -ForegroundColor White
 Write-Host ""
 Write-Host "Access points:" -ForegroundColor Yellow
@@ -337,6 +370,7 @@ Write-Host "  - PubMed URLs API: http://127.0.0.1:8002" -ForegroundColor White
 Write-Host "  - Full Text API: http://127.0.0.1:8003" -ForegroundColor White
 Write-Host "  - Classifier API: http://127.0.0.1:8004" -ForegroundColor White
 Write-Host "  - Questions Classifier API: http://127.0.0.1:8005" -ForegroundColor White
+Write-Host "  - DB Viewer & Export API: http://127.0.0.1:8006" -ForegroundColor White
 Write-Host "  - Qdrant Dashboard: http://localhost:8080" -ForegroundColor White
 Write-Host "  - Qdrant API: http://localhost:6333" -ForegroundColor White
 Write-Host ""

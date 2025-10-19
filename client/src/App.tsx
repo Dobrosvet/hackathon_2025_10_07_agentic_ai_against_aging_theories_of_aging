@@ -2,6 +2,7 @@ import './App.css'
 import { ServiceMonitor } from './components/ServiceMonitor'
 import { TheoryHighlightViewer } from './components/TheoryHighlightViewer'
 import { QuestionsClassifierViewer } from './components/QuestionsClassifierViewer'
+import { DatabaseViewer } from './components/DatabaseViewer'
 
 function App() {
   return (
@@ -32,6 +33,12 @@ function App() {
         name="Questions & Criterias Classifier"
         wsUrl="ws://127.0.0.1:8005/ws"
         apiUrl="http://127.0.0.1:8005/api"
+      />
+
+      <DatabaseViewer
+        name="Database Viewer & Export"
+        wsUrl="ws://127.0.0.1:8006/ws"
+        apiUrl="http://127.0.0.1:8006/api"
       />
 
       {/* Add more services here as needed */}

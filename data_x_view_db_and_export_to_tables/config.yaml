@@ -1,0 +1,35 @@
+# Configuration for Database Viewer and Export Service
+
+# Qdrant settings
+qdrant:
+  host: "localhost"
+  port: 6333
+  collection_name: "pubmed_papers"
+
+# Export settings
+export:
+  formats: ["csv", "xlsx"]
+  max_rows: 100000  # Maximum rows per export
+  output_dir: "../data/exports"  # Directory for exported files (relative to project root)
+
+# Table preview settings
+preview:
+  rows_limit: 10  # Number of rows for preview
+
+# Pagination settings
+pagination:
+  default_page_size: 50
+  max_page_size: 1000
+
+# API settings
+api:
+  host: "127.0.0.1"
+  port: 8006
+  reload: false
+  workers: 1
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG | INFO | WARNING | ERROR
+  save_to_file: true
+  log_file: "data/logs/db_viewer.log"

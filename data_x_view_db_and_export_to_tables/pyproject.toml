@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "data-x-view-db-and-export-to-tables"
+version = "0.1.0"
+description = "Database Viewer and Export Service - View and export aging theories data"
+authors = ["Hackathon Team"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.104.0"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+qdrant-client = "^1.6.0"
+pandas = "^2.1.0"
+openpyxl = "^3.1.0"
+pyyaml = "^6.0.1"
+python-multipart = "^0.0.6"
+websockets = "^12.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
