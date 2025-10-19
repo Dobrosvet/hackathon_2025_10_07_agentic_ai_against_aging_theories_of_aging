@@ -1,0 +1,86 @@
+# Конфигурация Questions and Criterias Classifier Service
+
+# Режим классификации
+classifier:
+  # Модель для классификации
+  model_name: "bioformers/bioformer-8L"
+
+  # GPU настройки
+  use_gpu: true  # Использовать GPU если доступен
+  quantize: false  # Использовать int8 quantization для ускорения
+
+  # Параметры классификации
+  confidence_threshold: 0.5  # Минимальная уверенность для классификации
+
+  # Batch processing
+  batch_size: 32  # Размер батча для GPU обработки
+  max_length: 512  # Максимальная длина токенов
+
+  # Sliding window для длинных текстов
+  sliding_window_size: 512  # Размер окна (токены)
+  sliding_window_stride: 256  # Шаг окна (токены)
+
+# Вопросы и критерии для классификации
+questions:
+  Q1:
+    text: "Does it suggest an aging biomarker (measurable entity reflecting aging pace or health state, associated with mortality or age-related conditions)?"
+    type: "multiclass"
+    options: ["Yes, quantitatively shown", "Yes, but not shown", "No"]
+  Q2:
+    text: "Does it suggest a molecular mechanism of aging?"
+    type: "binary"
+  Q3:
+    text: "Does it suggest a longevity intervention to test?"
+    type: "binary"
+  Q4:
+    text: "Does it claim that aging cannot be reversed?"
+    type: "binary"
+  Q5:
+    text: "Does it suggest a biomarker that predicts maximal lifespan differences between species?"
+    type: "binary"
+  Q6:
+    text: "Does it explain why the naked mole rat can live 40+ years despite its small size?"
+    type: "binary"
+  Q7:
+    text: "Does it explain why birds live much longer than mammals on average?"
+    type: "binary"
+  Q8:
+    text: "Does it explain why large animals live longer than small ones?"
+    type: "binary"
+  Q9:
+    text: "Does it explain why calorie restriction increases the lifespan of vertebrates?"
+    type: "binary"
+
+criteria:
+  C1:
+    text: "Proposes biomarkers explaining maximal lifespan across species"
+    type: "binary"
+  C2:
+    text: "Proposes biomarkers explaining mortality within species"
+    type: "binary"
+  C3:
+    text: "Predicts testable longevity interventions"
+    type: "binary"
+  C4:
+    text: "Is mechanistic (molecular pathways) rather than phenomenological"
+    type: "binary"
+
+# Qdrant настройки
+qdrant:
+  host: "localhost"
+  port: 6333
+  collection_name: "pubmed_papers"
+  batch_size: 10  # Размер батча для сохранения в Qdrant
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG | INFO | WARNING | ERROR
+  save_to_file: true
+  log_file: "data/logs/questions_classifier.log"
+
+# API настройки
+api:
+  host: "127.0.0.1"
+  port: 8005
+  reload: false  # Auto-reload при изменении кода
+  workers: 1  # Количество uvicorn worker'ов

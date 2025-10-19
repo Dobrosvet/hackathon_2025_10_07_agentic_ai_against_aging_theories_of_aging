@@ -44,6 +44,13 @@ function Stop-SavedServices {
                 } catch {}
             }
 
+            if ($pids.microserviceD) {
+                try {
+                    Stop-Process -Id $pids.microserviceD -Force -ErrorAction SilentlyContinue
+                    Write-Host "  - Stopped microservice D (PID: $($pids.microserviceD))" -ForegroundColor Gray
+                } catch {}
+            }
+
             if ($pids.client) {
                 try {
                     Stop-Process -Id $pids.client -Force -ErrorAction SilentlyContinue
@@ -142,6 +149,7 @@ Stop-SavedServices
 Stop-ProcessOnPort 8002  # Microservice A (URLs)
 Stop-ProcessOnPort 8003  # Microservice B (Full texts)
 Stop-ProcessOnPort 8004  # Microservice C (Classifier)
+Stop-ProcessOnPort 8005  # Microservice D (Questions Classifier)
 Stop-ProcessOnPort 5173  # Client
 Stop-ProcessOnPort 6333  # Qdrant HTTP
 Stop-ProcessOnPort 6334  # Qdrant gRPC
@@ -235,6 +243,57 @@ $microserviceCProcess = Start-Process -FilePath "poetry" `
 
 Start-Sleep -Seconds 3
 
+# Start Microservice D - Questions & Criterias Classifier
+Write-Host "  - Starting Questions & Criterias Classifier..." -ForegroundColor Green
+$microserviceDPath = "$ScriptDir\data_d_questions_and_criterias_classifier"
+
+# Check if dependencies are installed
+Write-Host "    Checking dependencies for Questions Classifier..." -ForegroundColor Gray
+$lockFile = "$microserviceDPath\poetry.lock"
+
+if (-not (Test-Path $lockFile)) {
+    Write-Host "    Installing dependencies (first time setup)..." -ForegroundColor Yellow
+    Push-Location $microserviceDPath
+    & poetry install --no-root 2>&1 | Out-Null
+    Pop-Location
+}
+
+# Check and install additional dependencies if needed
+$venvPythonD = "$microserviceDPath\.venv\Scripts\python.exe"
+
+if (Test-Path $venvPythonD) {
+    # Check if PyYAML is installed
+    $yamlCheck = & $venvPythonD -c "import yaml" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "    Installing PyYAML..." -ForegroundColor Yellow
+        & $venvPythonD -m pip install -q pyyaml
+    }
+
+    # Check if websockets is installed
+    $wsCheck = & $venvPythonD -c "import websockets" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "    Installing websockets..." -ForegroundColor Yellow
+        & $venvPythonD -m pip install -q websockets
+    }
+
+    # Check if transformers is installed
+    $transformersCheck = & $venvPythonD -c "import transformers" 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "    Installing transformers and dependencies..." -ForegroundColor Yellow
+        Push-Location $microserviceDPath
+        & poetry install --no-root 2>&1 | Out-Null
+        Pop-Location
+    }
+}
+
+$microserviceDProcess = Start-Process -FilePath "poetry" `
+    -ArgumentList "run", "python", "main.py" `
+    -WorkingDirectory $microserviceDPath `
+    -PassThru `
+    -WindowStyle Hidden
+
+Start-Sleep -Seconds 5
+
 # Start Client
 Write-Host "  - Starting Client Dashboard..." -ForegroundColor Green
 $clientPath = "$ScriptDir\client"
@@ -253,6 +312,7 @@ $pids = @{
     microserviceA = $microserviceAProcess.Id
     microserviceB = $microserviceBProcess.Id
     microserviceC = $microserviceCProcess.Id
+    microserviceD = $microserviceDProcess.Id
     client = $clientProcess.Id
     timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
 }
@@ -268,6 +328,7 @@ Write-Host "  - Qdrant Web UI PID: $($webUIProcess.Id)" -ForegroundColor White
 Write-Host "  - Microservice A (URLs) PID: $($microserviceAProcess.Id)" -ForegroundColor White
 Write-Host "  - Microservice B (Full Texts) PID: $($microserviceBProcess.Id)" -ForegroundColor White
 Write-Host "  - Microservice C (Classifier) PID: $($microserviceCProcess.Id)" -ForegroundColor White
+Write-Host "  - Microservice D (Questions) PID: $($microserviceDProcess.Id)" -ForegroundColor White
 Write-Host "  - Client PID: $($clientProcess.Id)" -ForegroundColor White
 Write-Host ""
 Write-Host "Access points:" -ForegroundColor Yellow
@@ -275,6 +336,7 @@ Write-Host "  - Client Dashboard: http://localhost:5173" -ForegroundColor White
 Write-Host "  - PubMed URLs API: http://127.0.0.1:8002" -ForegroundColor White
 Write-Host "  - Full Text API: http://127.0.0.1:8003" -ForegroundColor White
 Write-Host "  - Classifier API: http://127.0.0.1:8004" -ForegroundColor White
+Write-Host "  - Questions Classifier API: http://127.0.0.1:8005" -ForegroundColor White
 Write-Host "  - Qdrant Dashboard: http://localhost:8080" -ForegroundColor White
 Write-Host "  - Qdrant API: http://localhost:6333" -ForegroundColor White
 Write-Host ""

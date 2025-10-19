@@ -1,6 +1,7 @@
 import './App.css'
 import { ServiceMonitor } from './components/ServiceMonitor'
 import { TheoryHighlightViewer } from './components/TheoryHighlightViewer'
+import { QuestionsClassifierViewer } from './components/QuestionsClassifierViewer'
 
 function App() {
   return (
@@ -25,6 +26,12 @@ function App() {
         name="Aging Theory Classifier & NER"
         wsUrl="ws://127.0.0.1:8004/ws"
         apiUrl="http://127.0.0.1:8004/api"
+      />
+
+      <QuestionsClassifierViewer
+        name="Questions & Criterias Classifier"
+        wsUrl="ws://127.0.0.1:8005/ws"
+        apiUrl="http://127.0.0.1:8005/api"
       />
 
       {/* Add more services here as needed */}

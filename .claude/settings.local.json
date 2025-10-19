@@ -42,7 +42,8 @@
       "Bash(\".\\.venv\\Scripts\\python.exe\" -m pip install pyyaml)",
       "Bash(wmic process where \"ProcessId=19372\" delete)",
       "Bash(wmic process where \"ProcessId=13464\" delete)",
-      "Bash(wmic process where \"ProcessId=23568\" delete)"
+      "Bash(wmic process where \"ProcessId=23568\" delete)",
+      "Bash(poetry lock --no-update)"
     ],
     "deny": [],
     "ask": []
