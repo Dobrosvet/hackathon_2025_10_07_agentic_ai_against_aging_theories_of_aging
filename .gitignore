@@ -13,7 +13,6 @@ __pycache__/
 *.so
 *.egg
 *.egg-info/
-dist/
 build/
 .mypy_cache
 .pytest_cache
@@ -46,7 +45,6 @@ yarn-error.log*
 *.backup
 
 # Build outputs
-dist/
 build/
 *.bundle.js
 *.bundle.css
@@ -57,6 +55,3 @@ build/
 # Qdrant data
 qdrant/storage/
 qdrant/.qdrant-initialized
-
-# Qdrant Web UI dist files
-dist-qdrant/
