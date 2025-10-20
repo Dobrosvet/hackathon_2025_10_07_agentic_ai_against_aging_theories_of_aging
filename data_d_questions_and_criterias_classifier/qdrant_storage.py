@@ -441,3 +441,89 @@ class QdrantStorage:
         except Exception as e:
             logger.error(f"Error getting collection info: {e}")
             return {"count": 0, "error": str(e)}
+
+    def get_validation_papers(self) -> List[Dict[str, Any]]:
+        """
+        Получить все валидационные статьи (с ручной разметкой)
+
+        Returns:
+            Список валидационных статей
+        """
+        try:
+            if not self.client:
+                return []
+
+            papers = []
+            offset = None
+            batch_size = 100
+
+            while True:
+                result = self.client.scroll(
+                    collection_name=self.collection_name,
+                    limit=batch_size,
+                    offset=offset,
+                    with_payload=True,
+                    with_vectors=False
+                )
+
+                points, offset = result
+
+                if not points:
+                    break
+
+                for point in points:
+                    # Проверяем флаг валидационных данных
+                    if point.payload.get("is_validation_data") is True:
+                        papers.append({
+                            "id": point.id,
+                            "paper_url": point.payload.get("paper_url", ""),
+                            "title": point.payload.get("title", ""),
+                            "year": point.payload.get("year", ""),
+                            "full_text": point.payload.get("full_text", ""),
+                            "is_manually_annotated": point.payload.get("is_manually_annotated", False),
+                            "is_aging_theory": point.payload.get("is_aging_theory", False),
+                            "validation_questions": point.payload.get("validation_questions", {}),
+                            "questions_classification": point.payload.get("questions_classification"),
+                            "criteria_classification": point.payload.get("criteria_classification"),
+                            "validation_timestamp": point.payload.get("validation_timestamp"),
+                            "questions_timestamp": point.payload.get("questions_timestamp"),
+                            "validation_paper_name": point.payload.get("validation_paper_name", ""),
+                            "validation_paper_year": point.payload.get("validation_paper_year", "")
+                        })
+
+                if offset is None:
+                    break
+
+            logger.info(f"Retrieved {len(papers)} validation papers")
+            return papers
+
+        except Exception as e:
+            logger.error(f"Error getting validation papers: {e}")
+            return []
+
+    def get_validation_paper_by_url(self, paper_url: str) -> Optional[Dict[str, Any]]:
+        """
+        Получить валидационную статью по URL
+
+        Args:
+            paper_url: URL статьи
+
+        Returns:
+            Данные валидационной статьи или None
+        """
+        try:
+            validation_papers = self.get_validation_papers()
+
+            # Нормализовать URL для поиска
+            normalized_url = paper_url.lower().strip().rstrip('/')
+
+            for paper in validation_papers:
+                paper_url_normalized = paper.get("paper_url", "").lower().strip().rstrip('/')
+                if paper_url_normalized == normalized_url:
+                    return paper
+
+            return None
+
+        except Exception as e:
+            logger.error(f"Error getting validation paper by URL {paper_url}: {e}")
+            return None

@@ -328,14 +328,27 @@ async def classify_papers():
         logger.exception(e)
 
 
+async def load_classified_count_async():
+    """Загрузить количество классифицированных статей асинхронно"""
+    try:
+        await asyncio.sleep(2)  # Подождать немного после старта
+        classified_count = qdrant_storage.get_classified_papers_count()
+        service_state["db_count"] = classified_count
+        service_state["skipped"] = classified_count
+        logger.info(f"Loaded classified papers count: {classified_count}")
+        await broadcast_state()
+    except Exception as e:
+        logger.error(f"Error loading classified count: {e}")
+
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize on startup"""
     try:
         await qdrant_storage.initialize()
-        # Don't count papers at startup - it's too slow and blocks server initialization
-        # Count will be updated when classification starts
-        service_state["db_count"] = 0
+        # Загружаем счетчик асинхронно, чтобы не блокировать старт
+        asyncio.create_task(load_classified_count_async())
+        service_state["db_count"] = 0  # Временно 0, обновится асинхронно
         logger.info(f"Database connection initialized")
     except Exception as e:
         logger.error(f"Error initializing database: {e}")

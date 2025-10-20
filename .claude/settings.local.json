@@ -43,7 +43,11 @@
       "Bash(wmic process where \"ProcessId=19372\" delete)",
       "Bash(wmic process where \"ProcessId=13464\" delete)",
       "Bash(wmic process where \"ProcessId=23568\" delete)",
-      "Bash(poetry lock --no-update)"
+      "Bash(poetry lock --no-update)",
+      "Bash(\"..\\.venv\\Scripts\\python.exe\" upload_validation_data.py)",
+      "Bash(../.venv/Scripts/python.exe upload_validation_data.py)",
+      "Bash(d:/Cloud/Projects/hackathon_aaaa_251016/.venv/Scripts/python.exe d:/Cloud/Projects/hackathon_aaaa_251016/personal_folder/upload_validation_data.py)",
+      "Bash(cmd /c \"d:\\Cloud\\Projects\\hackathon_aaaa_251016\\.venv\\Scripts\\python.exe d:\\Cloud\\Projects\\hackathon_aaaa_251016\\personal_folder\\upload_validation_data.py\")"
     ],
     "deny": [],
     "ask": []

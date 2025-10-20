@@ -12,6 +12,7 @@ import uvicorn
 
 from questions_classifier import QuestionsClassifier
 from qdrant_storage import QdrantStorage
+from validation_metrics import ValidationMetrics
 
 # Pydantic models
 class AnnotationRequest(BaseModel):
@@ -127,6 +128,7 @@ classifier = QuestionsClassifier(
     quantize=classifier_config.get("quantize", False)
 )
 qdrant_storage = QdrantStorage(str(DB_DIR))
+validation_metrics = ValidationMetrics()
 
 logger.info(f"Classifier info: {classifier.get_model_info()}")
 
@@ -294,8 +296,13 @@ async def startup_event():
     """Initialize on startup"""
     try:
         await qdrant_storage.initialize()
-        service_state["db_count"] = 0
-        logger.info(f"Database connection initialized")
+
+        # Загрузить текущее количество классифицированных статей
+        classified_count = qdrant_storage.get_classified_papers_count()
+        service_state["db_count"] = classified_count
+        service_state["saved"] = classified_count
+
+        logger.info(f"Database connection initialized. Found {classified_count} classified papers")
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
 
@@ -427,6 +434,187 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
         manager.disconnect(websocket)
+
+
+# ============================================================================
+# Validation Endpoints
+# ============================================================================
+
+@app.get("/api/validation/papers")
+async def get_validation_papers():
+    """Get all validation papers with manual annotations"""
+    try:
+        papers = qdrant_storage.get_validation_papers()
+
+        # Подготовить данные для отображения
+        result = []
+        for paper in papers:
+            result.append({
+                "paper_url": paper.get("paper_url"),
+                "title": paper.get("validation_paper_name") or paper.get("title"),
+                "year": paper.get("validation_paper_year") or paper.get("year"),
+                "is_manually_annotated": paper.get("is_manually_annotated", False),
+                "has_predictions": paper.get("questions_classification") is not None,
+                "validation_timestamp": paper.get("validation_timestamp"),
+                "questions_timestamp": paper.get("questions_timestamp")
+            })
+
+        return {
+            "papers": result,
+            "count": len(result)
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting validation papers: {e}")
+        return {"error": str(e), "papers": [], "count": 0}
+
+
+@app.get("/api/validation/metrics")
+async def get_validation_metrics():
+    """Calculate and return validation metrics"""
+    try:
+        # Получить валидационные статьи
+        validation_papers = qdrant_storage.get_validation_papers()
+
+        if not validation_papers:
+            return {
+                "error": "No validation papers found",
+                "overall": {},
+                "per_question": {},
+                "paper_comparisons": [],
+                "num_papers": 0
+            }
+
+        # Рассчитать метрики
+        metrics = validation_metrics.calculate_validation_metrics(validation_papers)
+
+        # Форматировать для UI
+        formatted_metrics = validation_metrics.format_metrics_for_display(metrics)
+
+        logger.info(f"Calculated validation metrics for {len(validation_papers)} papers")
+
+        return formatted_metrics
+
+    except Exception as e:
+        logger.error(f"Error calculating validation metrics: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
+
+@app.post("/api/validation/classify")
+async def classify_validation_papers():
+    """Classify all validation papers and update predictions"""
+    try:
+        # Получить валидационные статьи
+        validation_papers = qdrant_storage.get_validation_papers()
+
+        if not validation_papers:
+            return {"error": "No validation papers found"}
+
+        await log_and_broadcast(f"Starting classification of {len(validation_papers)} validation papers...")
+
+        classified_count = 0
+        errors = 0
+
+        for paper in validation_papers:
+            try:
+                paper_url = paper.get("paper_url", "")
+                full_text = paper.get("full_text", "")
+                point_id = paper.get("id")
+
+                if not full_text:
+                    logger.warning(f"Paper {paper_url} has no full text")
+                    continue
+
+                await log_and_broadcast(f"Classifying {paper_url}...")
+
+                # Классифицировать
+                classification_result = classifier.classify_paper(full_text)
+
+                # Обновить в БД
+                success = await qdrant_storage.update_paper_with_questions_classification(
+                    point_id=point_id,
+                    pmc_id=paper.get("paper_url", ""),  # Используем URL как ID
+                    classification_result=classification_result
+                )
+
+                if success:
+                    classified_count += 1
+                    await log_and_broadcast(f"✓ Classified {paper_url}")
+                else:
+                    errors += 1
+                    await log_and_broadcast(f"✗ Failed to save {paper_url}", "ERROR")
+
+            except Exception as e:
+                errors += 1
+                logger.error(f"Error classifying paper {paper.get('paper_url')}: {e}")
+                await log_and_broadcast(f"Error: {str(e)}", "ERROR")
+
+        await log_and_broadcast(
+            f"Classification complete! Classified: {classified_count}, Errors: {errors}"
+        )
+
+        return {
+            "success": True,
+            "classified_count": classified_count,
+            "errors": errors,
+            "total": len(validation_papers)
+        }
+
+    except Exception as e:
+        logger.error(f"Error in validation classification: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/validation/comparison/{paper_url:path}")
+async def get_validation_comparison(paper_url: str):
+    """Get detailed comparison for a specific validation paper"""
+    try:
+        paper = qdrant_storage.get_validation_paper_by_url(paper_url)
+
+        if not paper:
+            return {"error": f"Paper not found: {paper_url}"}
+
+        # Подготовить детальное сравнение
+        comparison = {
+            "paper_url": paper.get("paper_url"),
+            "title": paper.get("validation_paper_name") or paper.get("title"),
+            "year": paper.get("validation_paper_year") or paper.get("year"),
+            "questions": {}
+        }
+
+        for i in range(1, 10):
+            question_id = f"Q{i}"
+
+            # Ручная разметка
+            manual = paper.get("validation_questions", {}).get(question_id)
+
+            # Предсказание модели
+            model = None
+            questions_classification = paper.get("questions_classification", {})
+            if isinstance(questions_classification, dict):
+                question_result = questions_classification.get(question_id)
+                if question_result and isinstance(question_result, dict):
+                    model = question_result.get("answer")
+
+            # Нормализовать
+            manual_normalized = validation_metrics.normalize_answer(manual) if manual is not None else None
+            model_normalized = validation_metrics.normalize_answer(model) if model is not None else None
+
+            comparison["questions"][question_id] = {
+                "manual": manual_normalized,
+                "predicted": model_normalized,
+                "match": manual_normalized == model_normalized if (manual_normalized and model_normalized) else None
+            }
+
+        return comparison
+
+    except Exception as e:
+        logger.error(f"Error getting comparison for {paper_url}: {e}")
+        return {"error": str(e)}
 
 
 if __name__ == "__main__":
