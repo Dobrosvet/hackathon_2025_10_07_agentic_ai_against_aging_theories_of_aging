@@ -5,9 +5,10 @@
   "description": "Best general-purpose sentence embedding model",
   "params": "110M",
   "training_data": "1B+ sentence pairs",
-  "timestamp": "2025-10-21T10:05:16.663457",
+  "timestamp": "2025-10-21T14:46:03.633968",
   "error": null,
-  "init_time_sec": 0.02,
+  "requires_auth": false,
+  "init_time_sec": 0.01,
   "model_info": {
     "model_name": "sentence-transformers/all-mpnet-base-v2",
     "approach": "sentence_bert",
@@ -16,8 +17,8 @@
     "num_questions": 9,
     "num_criteria": 4
   },
-  "total_classification_time_sec": 26.69,
-  "avg_time_per_paper_sec": 5.34,
+  "total_classification_time_sec": 28.36,
+  "avg_time_per_paper_sec": 5.67,
   "metrics": {
     "overall": {
       "accuracy_micro": 0.5111,

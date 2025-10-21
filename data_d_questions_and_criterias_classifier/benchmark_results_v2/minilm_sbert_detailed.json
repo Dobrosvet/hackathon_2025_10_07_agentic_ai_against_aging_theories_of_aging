@@ -5,8 +5,9 @@
   "description": "Fast and efficient sentence embeddings",
   "params": "23M",
   "training_data": "1B+ sentence pairs",
-  "timestamp": "2025-10-21T10:05:50.550046",
+  "timestamp": "2025-10-21T14:46:38.459125",
   "error": null,
+  "requires_auth": false,
   "init_time_sec": 0.01,
   "model_info": {
     "model_name": "sentence-transformers/all-MiniLM-L6-v2",
@@ -16,8 +17,8 @@
     "num_questions": 9,
     "num_criteria": 4
   },
-  "total_classification_time_sec": 3.86,
-  "avg_time_per_paper_sec": 0.77,
+  "total_classification_time_sec": 4.19,
+  "avg_time_per_paper_sec": 0.84,
   "metrics": {
     "overall": {
       "accuracy_micro": 0.5111,

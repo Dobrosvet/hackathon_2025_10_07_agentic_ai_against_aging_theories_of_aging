@@ -11,6 +11,18 @@ models:
     expected_vram_gb: 2.0
     enabled: true
 
+  random_baseline:
+    name: "random_baseline"
+    approach: "random"
+    description: "Deterministic random baseline (fixed seed)"
+    params: "-"
+    expected_vram_gb: 0.0
+    training_data: "None"
+    best_for: "Statistical sanity check"
+    enabled: true
+    random_config:
+      seed: 1337
+
   # ==================== NLI MODELS (Zero-Shot Classification) ====================
 
   # TOP PRIORITY: DeBERTa v3 - SOTA on NLI tasks
@@ -38,7 +50,7 @@ models:
     training_data: "MNLI (Multi-Genre NLI)"
     best_for: "Zero-shot classification, robust across domains"
     paper: "https://arxiv.org/abs/1910.13461"
-    enabled: true
+    enabled: false
     nli_config:
       hypothesis_template: "This paper {}"
       entailment_threshold: 0.5
@@ -52,7 +64,7 @@ models:
     expected_vram_gb: 2.0
     training_data: "Semantic Scholar papers"
     best_for: "Scientific text NLI"
-    enabled: true
+    enabled: false
     nli_config:
       hypothesis_template: "This paper {}"
       entailment_threshold: 0.5
@@ -94,7 +106,7 @@ models:
     training_data: "1B+ sentence pairs"
     best_for: "General semantic similarity (SOTA on STS)"
     paper: "https://arxiv.org/abs/1908.10084"
-    enabled: true
+    enabled: false
     sbert_config:
       normalize_embeddings: true
       pooling: "mean"
@@ -108,7 +120,7 @@ models:
     expected_vram_gb: 1.0
     training_data: "1B+ sentence pairs"
     best_for: "Fast semantic similarity"
-    enabled: true
+    enabled: false
     sbert_config:
       normalize_embeddings: true
       pooling: "mean"
@@ -123,7 +135,7 @@ models:
     training_data: "Scientific papers from Semantic Scholar"
     best_for: "Scientific document embeddings"
     paper: "https://arxiv.org/abs/2004.07180"
-    enabled: true
+    enabled: false
     sbert_config:
       normalize_embeddings: true
       pooling: "cls"
@@ -140,7 +152,7 @@ models:
     training_data: "PubMed + link prediction"
     best_for: "Biomedical text understanding"
     paper: "https://arxiv.org/abs/2203.15827"
-    enabled: true
+    enabled: false
     sbert_config:
       normalize_embeddings: true
       pooling: "mean"
@@ -157,7 +169,8 @@ models:
     training_data: "Medical texts + de-identified medical images (X-rays, dermatology, histopathology)"
     best_for: "Medical question answering, clinical summarization"
     paper: "https://arxiv.org/abs/2507.05201"
-    enabled: true
+    enabled: false
+    requires_auth: true
     generation_config:
       max_new_tokens: 5
       temperature: 0.0
@@ -175,6 +188,7 @@ models:
     best_for: "Biomedical text understanding, medical QA"
     paper: "https://arxiv.org/abs/2403.18421"
     enabled: false
+    requires_auth: true
     generation_config:
       max_new_tokens: 5
       temperature: 0.0
@@ -192,6 +206,7 @@ models:
     best_for: "Complex reasoning, fact-checking, educational applications"
     paper: "https://www.microsoft.com/en-us/research/publication/phi-4-technical-report/"
     enabled: false
+    requires_auth: false
     generation_config:
       max_new_tokens: 5
       temperature: 0.0
@@ -209,6 +224,7 @@ models:
     best_for: "General instruction following, multilingual tasks"
     paper: "https://qwenlm.github.io/blog/qwen3/"
     enabled: false
+    requires_auth: true
     generation_config:
       max_new_tokens: 5
       temperature: 0.0
@@ -224,23 +240,25 @@ models:
     expected_vram_gb: 4.0
     training_data: "General + instructions"
     best_for: "Edge/mobile devices, efficient inference"
-    enabled: true
+    enabled: false
+    requires_auth: true
     generation_config:
       max_new_tokens: 5
       temperature: 0.0
       do_sample: false
       quantization: true
 
-  # Mistral Ministral 3B (October 2024)
+  # Mistral 7B Instruct v0.2
   ministral_3b:
-    name: "mistralai/Ministral-3B-2410"
+    name: "mistralai/Mistral-7B-Instruct-v0.2"
     approach: "llm_generation"
-    description: "Ministral 3B - Edge-computing optimized, 128K context"
-    params: "3B"
-    expected_vram_gb: 4.0
-    training_data: "General data, edge-optimized"
-    best_for: "Fast inference, edge computing"
-    enabled: true
+    description: "Mistral 7B Instruct v0.2 – обновлённая версия с улучшенным обучением"
+    params: "7B"
+    expected_vram_gb: 14.0
+    training_data: "Обновлённый инструктивный корпус Mistral"
+    best_for: "Общая генерация и диалоговые сценарии"
+    enabled: false
+    requires_auth: true
     generation_config:
       max_new_tokens: 5
       temperature: 0.0

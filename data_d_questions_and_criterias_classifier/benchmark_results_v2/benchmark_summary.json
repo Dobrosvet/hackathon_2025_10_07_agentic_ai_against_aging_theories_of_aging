@@ -1,6 +1,6 @@
 {
-  "timestamp": "2025-10-21T10:07:17.502882",
-  "num_models_tested": 11,
+  "timestamp": "2025-10-21T17:04:49.969734",
+  "num_models_tested": 4,
   "num_validation_papers": 5,
   "results": {
     "bioformer_baseline": {
@@ -10,9 +10,10 @@
       "description": "Current baseline model (embedding approach)",
       "params": "108M",
       "training_data": null,
-      "timestamp": "2025-10-21T09:59:12.714155",
+      "timestamp": "2025-10-21T17:03:54.987348",
       "error": null,
-      "init_time_sec": 0.02,
+      "requires_auth": false,
+      "init_time_sec": 0.01,
       "model_info": {
         "model_name": "bioformers/bioformer-8L",
         "approach": "embedding",
@@ -21,8 +22,8 @@
         "num_questions": 9,
         "num_criteria": 4
       },
-      "total_classification_time_sec": 8.75,
-      "avg_time_per_paper_sec": 1.75,
+      "total_classification_time_sec": 8.93,
+      "avg_time_per_paper_sec": 1.79,
       "metrics": {
         "overall": {
           "accuracy_micro": 0.4889,
@@ -426,36 +427,37 @@
       "improvement_absolute": -0.0606,
       "improvement_percent": -10.29
     },
-    "bart_nli": {
-      "model_key": "bart_nli",
-      "model_name": "facebook/bart-large-mnli",
-      "approach": "nli",
-      "description": "BART-Large fine-tuned on MNLI",
-      "params": "406M",
-      "training_data": "MNLI (Multi-Genre NLI)",
-      "timestamp": "2025-10-21T10:00:51.329703",
+    "random_baseline": {
+      "model_key": "random_baseline",
+      "model_name": "random_baseline",
+      "approach": "random",
+      "description": "Deterministic random baseline (fixed seed)",
+      "params": "-",
+      "training_data": "None",
+      "timestamp": "2025-10-21T17:04:14.616315",
       "error": null,
-      "init_time_sec": 0.02,
+      "requires_auth": false,
+      "init_time_sec": 0.01,
       "model_info": {
-        "model_name": "facebook/bart-large-mnli",
-        "approach": "nli",
+        "model_name": "random_baseline",
+        "approach": "random",
         "device": "cpu",
         "initialized": true,
         "num_questions": 9,
         "num_criteria": 4
       },
-      "total_classification_time_sec": 187.53,
-      "avg_time_per_paper_sec": 37.51,
+      "total_classification_time_sec": 0.02,
+      "avg_time_per_paper_sec": 0.0,
       "metrics": {
         "overall": {
-          "accuracy_micro": 0.4667,
-          "accuracy_macro": 0.4666666666666667,
-          "accuracy_weighted": 0.4667,
-          "precision_micro": 0.5,
-          "recall_micro": 0.6667,
-          "f1_micro": 0.5714,
-          "f1_macro": 0.4973,
-          "f1_weighted": 0.4973,
+          "accuracy_micro": 0.5778,
+          "accuracy_macro": 0.5777777777777777,
+          "accuracy_weighted": 0.5778,
+          "precision_micro": 0.6471,
+          "recall_micro": 0.4583,
+          "f1_micro": 0.5366,
+          "f1_macro": 0.4926,
+          "f1_weighted": 0.4926,
           "total_support": 45
         },
         "per_question": {
@@ -473,2131 +475,16 @@
             }
           },
           "Q2": {
-            "accuracy": 1.0,
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1_score": 1.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 4,
-              "tn": 1,
-              "fp": 0,
-              "fn": 0
-            }
-          },
-          "Q3": {
-            "accuracy": 1.0,
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1_score": 1.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 4,
-              "tn": 1,
-              "fp": 0,
-              "fn": 0
-            }
-          },
-          "Q4": {
-            "accuracy": 0.2,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 1,
-              "fp": 4,
-              "fn": 0
-            }
-          },
-          "Q5": {
             "accuracy": 0.6,
-            "precision": 0.5,
-            "recall": 1.0,
+            "precision": 1.0,
+            "recall": 0.5,
             "f1_score": 0.6667,
             "support": 5,
             "confusion_matrix": {
               "tp": 2,
               "tn": 1,
-              "fp": 2,
-              "fn": 0
-            }
-          },
-          "Q6": {
-            "accuracy": 0.2,
-            "precision": 0.25,
-            "recall": 0.5,
-            "f1_score": 0.3333,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 1,
-              "tn": 0,
-              "fp": 3,
-              "fn": 1
-            }
-          },
-          "Q7": {
-            "accuracy": 0.2,
-            "precision": 0.25,
-            "recall": 0.5,
-            "f1_score": 0.3333,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 1,
-              "tn": 0,
-              "fp": 3,
-              "fn": 1
-            }
-          },
-          "Q8": {
-            "accuracy": 0.4,
-            "precision": 0.5,
-            "recall": 0.6667,
-            "f1_score": 0.5714,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 2,
-              "tn": 0,
-              "fp": 2,
-              "fn": 1
-            }
-          },
-          "Q9": {
-            "accuracy": 0.4,
-            "precision": 0.5,
-            "recall": 0.6667,
-            "f1_score": 0.5714,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 2,
-              "tn": 0,
-              "fp": 2,
-              "fn": 1
-            }
-          }
-        },
-        "paper_comparisons": [
-          {
-            "paper_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7612201/",
-            "paper_name": "The hyperfunction theory: An emerging paradigm for the biology of aging",
-            "paper_year": "2022",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/36096982/",
-            "paper_name": "Could aging evolve as a pathogen control strategy?",
-            "paper_year": "2022",
-            "questions": {
-              "Q1": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q2": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q3": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q6": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q7": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/40423632/",
-            "paper_name": "Causality of Aging Hallmarks",
-            "paper_year": "2025",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q7": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/38636560/",
-            "paper_name": "Aging as a loss of morphostatic information: A developmental bioelectricity perspective",
-            "paper_year": "2024",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q8": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q9": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/38102202/",
-            "paper_name": "The Information Theory of Aging",
-            "paper_year": "2023",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q6": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q8": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q9": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              }
-            }
-          }
-        ],
-        "num_papers": 5
-      },
-      "num_papers_classified": 5,
-      "f1_weighted": 0.4973,
-      "f1_macro": 0.4973,
-      "f1_micro": 0.5714,
-      "accuracy_weighted": 0.4667,
-      "improvement_absolute": -0.0918,
-      "improvement_percent": -15.58
-    },
-    "biomed_nli": {
-      "model_key": "biomed_nli",
-      "model_name": "allenai/scibert_scivocab_uncased",
-      "approach": "nli",
-      "description": "SciBERT adapted for NLI on scientific text",
-      "params": "110M",
-      "training_data": "Semantic Scholar papers",
-      "timestamp": "2025-10-21T10:04:03.427862",
-      "error": null,
-      "init_time_sec": 0.01,
-      "model_info": {
-        "model_name": "allenai/scibert_scivocab_uncased",
-        "approach": "nli",
-        "device": "cpu",
-        "initialized": true,
-        "num_questions": 9,
-        "num_criteria": 4
-      },
-      "total_classification_time_sec": 39.49,
-      "avg_time_per_paper_sec": 7.9,
-      "metrics": {
-        "overall": {
-          "accuracy_micro": 0.4667,
-          "accuracy_macro": 0.4666666666666667,
-          "accuracy_weighted": 0.4667,
-          "precision_micro": 0.5,
-          "recall_micro": 0.8333,
-          "f1_micro": 0.625,
-          "f1_macro": 0.5547,
-          "f1_weighted": 0.5547,
-          "total_support": 45
-        },
-        "per_question": {
-          "Q1": {
-            "accuracy": 0.2,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 1,
-              "fp": 0,
-              "fn": 4
-            }
-          },
-          "Q2": {
-            "accuracy": 0.8,
-            "precision": 0.8,
-            "recall": 1.0,
-            "f1_score": 0.8889,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 4,
-              "tn": 0,
-              "fp": 1,
-              "fn": 0
-            }
-          },
-          "Q3": {
-            "accuracy": 0.8,
-            "precision": 0.8,
-            "recall": 1.0,
-            "f1_score": 0.8889,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 4,
-              "tn": 0,
-              "fp": 1,
-              "fn": 0
-            }
-          },
-          "Q4": {
-            "accuracy": 0.0,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 0,
-              "fp": 5,
-              "fn": 0
-            }
-          },
-          "Q5": {
-            "accuracy": 0.4,
-            "precision": 0.4,
-            "recall": 1.0,
-            "f1_score": 0.5714,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 2,
-              "tn": 0,
-              "fp": 3,
-              "fn": 0
-            }
-          },
-          "Q6": {
-            "accuracy": 0.4,
-            "precision": 0.4,
-            "recall": 1.0,
-            "f1_score": 0.5714,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 2,
-              "tn": 0,
-              "fp": 3,
-              "fn": 0
-            }
-          },
-          "Q7": {
-            "accuracy": 0.4,
-            "precision": 0.4,
-            "recall": 1.0,
-            "f1_score": 0.5714,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 2,
-              "tn": 0,
-              "fp": 3,
-              "fn": 0
-            }
-          },
-          "Q8": {
-            "accuracy": 0.6,
-            "precision": 0.6,
-            "recall": 1.0,
-            "f1_score": 0.75,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 3,
-              "tn": 0,
-              "fp": 2,
-              "fn": 0
-            }
-          },
-          "Q9": {
-            "accuracy": 0.6,
-            "precision": 0.6,
-            "recall": 1.0,
-            "f1_score": 0.75,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 3,
-              "tn": 0,
-              "fp": 2,
-              "fn": 0
-            }
-          }
-        },
-        "paper_comparisons": [
-          {
-            "paper_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7612201/",
-            "paper_name": "The hyperfunction theory: An emerging paradigm for the biology of aging",
-            "paper_year": "2022",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/36096982/",
-            "paper_name": "Could aging evolve as a pathogen control strategy?",
-            "paper_year": "2022",
-            "questions": {
-              "Q1": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q2": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q3": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q6": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q7": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/40423632/",
-            "paper_name": "Causality of Aging Hallmarks",
-            "paper_year": "2025",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q7": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/38636560/",
-            "paper_name": "Aging as a loss of morphostatic information: A developmental bioelectricity perspective",
-            "paper_year": "2024",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q8": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q9": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/38102202/",
-            "paper_name": "The Information Theory of Aging",
-            "paper_year": "2023",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q6": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q8": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q9": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              }
-            }
-          }
-        ],
-        "num_papers": 5
-      },
-      "num_papers_classified": 5,
-      "f1_weighted": 0.5547,
-      "f1_macro": 0.5547,
-      "f1_micro": 0.625,
-      "accuracy_weighted": 0.4667,
-      "improvement_absolute": -0.0344,
-      "improvement_percent": -5.84
-    },
-    "pubmedbert_sbert": {
-      "model_key": "pubmedbert_sbert",
-      "model_name": "pritamdeka/S-PubMedBert-MS-MARCO",
-      "approach": "sentence_bert",
-      "description": "Sentence-BERT for biomedical text (PubMed)",
-      "params": "110M",
-      "training_data": "PubMed + MS MARCO",
-      "timestamp": "2025-10-21T10:04:47.151463",
-      "error": null,
-      "init_time_sec": 0.02,
-      "model_info": {
-        "model_name": "pritamdeka/S-PubMedBert-MS-MARCO",
-        "approach": "sentence_bert",
-        "device": "cpu",
-        "initialized": true,
-        "num_questions": 9,
-        "num_criteria": 4
-      },
-      "total_classification_time_sec": 20.23,
-      "avg_time_per_paper_sec": 4.05,
-      "metrics": {
-        "overall": {
-          "accuracy_micro": 0.4667,
-          "accuracy_macro": 0.4666666666666667,
-          "accuracy_weighted": 0.4667,
-          "precision_micro": 0.5,
-          "recall_micro": 0.8333,
-          "f1_micro": 0.625,
-          "f1_macro": 0.5547,
-          "f1_weighted": 0.5547,
-          "total_support": 45
-        },
-        "per_question": {
-          "Q1": {
-            "accuracy": 0.2,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 1,
-              "fp": 0,
-              "fn": 4
-            }
-          },
-          "Q2": {
-            "accuracy": 0.8,
-            "precision": 0.8,
-            "recall": 1.0,
-            "f1_score": 0.8889,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 4,
-              "tn": 0,
-              "fp": 1,
-              "fn": 0
-            }
-          },
-          "Q3": {
-            "accuracy": 0.8,
-            "precision": 0.8,
-            "recall": 1.0,
-            "f1_score": 0.8889,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 4,
-              "tn": 0,
-              "fp": 1,
-              "fn": 0
-            }
-          },
-          "Q4": {
-            "accuracy": 0.0,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 0,
-              "fp": 5,
-              "fn": 0
-            }
-          },
-          "Q5": {
-            "accuracy": 0.4,
-            "precision": 0.4,
-            "recall": 1.0,
-            "f1_score": 0.5714,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 2,
-              "tn": 0,
-              "fp": 3,
-              "fn": 0
-            }
-          },
-          "Q6": {
-            "accuracy": 0.4,
-            "precision": 0.4,
-            "recall": 1.0,
-            "f1_score": 0.5714,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 2,
-              "tn": 0,
-              "fp": 3,
-              "fn": 0
-            }
-          },
-          "Q7": {
-            "accuracy": 0.4,
-            "precision": 0.4,
-            "recall": 1.0,
-            "f1_score": 0.5714,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 2,
-              "tn": 0,
-              "fp": 3,
-              "fn": 0
-            }
-          },
-          "Q8": {
-            "accuracy": 0.6,
-            "precision": 0.6,
-            "recall": 1.0,
-            "f1_score": 0.75,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 3,
-              "tn": 0,
-              "fp": 2,
-              "fn": 0
-            }
-          },
-          "Q9": {
-            "accuracy": 0.6,
-            "precision": 0.6,
-            "recall": 1.0,
-            "f1_score": 0.75,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 3,
-              "tn": 0,
-              "fp": 2,
-              "fn": 0
-            }
-          }
-        },
-        "paper_comparisons": [
-          {
-            "paper_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7612201/",
-            "paper_name": "The hyperfunction theory: An emerging paradigm for the biology of aging",
-            "paper_year": "2022",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/36096982/",
-            "paper_name": "Could aging evolve as a pathogen control strategy?",
-            "paper_year": "2022",
-            "questions": {
-              "Q1": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q2": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q3": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q6": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q7": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/40423632/",
-            "paper_name": "Causality of Aging Hallmarks",
-            "paper_year": "2025",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q7": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/38636560/",
-            "paper_name": "Aging as a loss of morphostatic information: A developmental bioelectricity perspective",
-            "paper_year": "2024",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q8": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q9": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/38102202/",
-            "paper_name": "The Information Theory of Aging",
-            "paper_year": "2023",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q6": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q8": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q9": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              }
-            }
-          }
-        ],
-        "num_papers": 5
-      },
-      "num_papers_classified": 5,
-      "f1_weighted": 0.5547,
-      "f1_macro": 0.5547,
-      "f1_micro": 0.625,
-      "accuracy_weighted": 0.4667,
-      "improvement_absolute": -0.0344,
-      "improvement_percent": -5.84
-    },
-    "mpnet_sbert": {
-      "model_key": "mpnet_sbert",
-      "model_name": "sentence-transformers/all-mpnet-base-v2",
-      "approach": "sentence_bert",
-      "description": "Best general-purpose sentence embedding model",
-      "params": "110M",
-      "training_data": "1B+ sentence pairs",
-      "timestamp": "2025-10-21T10:05:16.663457",
-      "error": null,
-      "init_time_sec": 0.02,
-      "model_info": {
-        "model_name": "sentence-transformers/all-mpnet-base-v2",
-        "approach": "sentence_bert",
-        "device": "cpu",
-        "initialized": true,
-        "num_questions": 9,
-        "num_criteria": 4
-      },
-      "total_classification_time_sec": 26.69,
-      "avg_time_per_paper_sec": 5.34,
-      "metrics": {
-        "overall": {
-          "accuracy_micro": 0.5111,
-          "accuracy_macro": 0.5111111111111111,
-          "accuracy_weighted": 0.5111,
-          "precision_micro": 0.5263,
-          "recall_micro": 0.8333,
-          "f1_micro": 0.6452,
-          "f1_macro": 0.5547,
-          "f1_weighted": 0.5547,
-          "total_support": 45
-        },
-        "per_question": {
-          "Q1": {
-            "accuracy": 0.2,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 1,
-              "fp": 0,
-              "fn": 4
-            }
-          },
-          "Q2": {
-            "accuracy": 0.8,
-            "precision": 0.8,
-            "recall": 1.0,
-            "f1_score": 0.8889,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 4,
-              "tn": 0,
-              "fp": 1,
-              "fn": 0
-            }
-          },
-          "Q3": {
-            "accuracy": 0.8,
-            "precision": 0.8,
-            "recall": 1.0,
-            "f1_score": 0.8889,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 4,
-              "tn": 0,
-              "fp": 1,
-              "fn": 0
-            }
-          },
-          "Q4": {
-            "accuracy": 0.4,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 2,
-              "fp": 3,
-              "fn": 0
-            }
-          },
-          "Q5": {
-            "accuracy": 0.4,
-            "precision": 0.4,
-            "recall": 1.0,
-            "f1_score": 0.5714,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 2,
-              "tn": 0,
-              "fp": 3,
-              "fn": 0
-            }
-          },
-          "Q6": {
-            "accuracy": 0.4,
-            "precision": 0.4,
-            "recall": 1.0,
-            "f1_score": 0.5714,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 2,
-              "tn": 0,
-              "fp": 3,
-              "fn": 0
-            }
-          },
-          "Q7": {
-            "accuracy": 0.4,
-            "precision": 0.4,
-            "recall": 1.0,
-            "f1_score": 0.5714,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 2,
-              "tn": 0,
-              "fp": 3,
-              "fn": 0
-            }
-          },
-          "Q8": {
-            "accuracy": 0.6,
-            "precision": 0.6,
-            "recall": 1.0,
-            "f1_score": 0.75,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 3,
-              "tn": 0,
-              "fp": 2,
-              "fn": 0
-            }
-          },
-          "Q9": {
-            "accuracy": 0.6,
-            "precision": 0.6,
-            "recall": 1.0,
-            "f1_score": 0.75,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 3,
-              "tn": 0,
-              "fp": 2,
-              "fn": 0
-            }
-          }
-        },
-        "paper_comparisons": [
-          {
-            "paper_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7612201/",
-            "paper_name": "The hyperfunction theory: An emerging paradigm for the biology of aging",
-            "paper_year": "2022",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/36096982/",
-            "paper_name": "Could aging evolve as a pathogen control strategy?",
-            "paper_year": "2022",
-            "questions": {
-              "Q1": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q2": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q3": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q6": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q7": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/40423632/",
-            "paper_name": "Causality of Aging Hallmarks",
-            "paper_year": "2025",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q7": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/38636560/",
-            "paper_name": "Aging as a loss of morphostatic information: A developmental bioelectricity perspective",
-            "paper_year": "2024",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q8": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q9": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/38102202/",
-            "paper_name": "The Information Theory of Aging",
-            "paper_year": "2023",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q6": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q8": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q9": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              }
-            }
-          }
-        ],
-        "num_papers": 5
-      },
-      "num_papers_classified": 5,
-      "f1_weighted": 0.5547,
-      "f1_macro": 0.5547,
-      "f1_micro": 0.6452,
-      "accuracy_weighted": 0.5111,
-      "improvement_absolute": -0.0344,
-      "improvement_percent": -5.84
-    },
-    "minilm_sbert": {
-      "model_key": "minilm_sbert",
-      "model_name": "sentence-transformers/all-MiniLM-L6-v2",
-      "approach": "sentence_bert",
-      "description": "Fast and efficient sentence embeddings",
-      "params": "23M",
-      "training_data": "1B+ sentence pairs",
-      "timestamp": "2025-10-21T10:05:50.550046",
-      "error": null,
-      "init_time_sec": 0.01,
-      "model_info": {
-        "model_name": "sentence-transformers/all-MiniLM-L6-v2",
-        "approach": "sentence_bert",
-        "device": "cpu",
-        "initialized": true,
-        "num_questions": 9,
-        "num_criteria": 4
-      },
-      "total_classification_time_sec": 3.86,
-      "avg_time_per_paper_sec": 0.77,
-      "metrics": {
-        "overall": {
-          "accuracy_micro": 0.5111,
-          "accuracy_macro": 0.5111111111111112,
-          "accuracy_weighted": 0.5111,
-          "precision_micro": 0.55,
-          "recall_micro": 0.4583,
-          "f1_micro": 0.5,
-          "f1_macro": 0.3654,
-          "f1_weighted": 0.3654,
-          "total_support": 45
-        },
-        "per_question": {
-          "Q1": {
-            "accuracy": 0.2,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 1,
-              "fp": 0,
-              "fn": 4
-            }
-          },
-          "Q2": {
-            "accuracy": 1.0,
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1_score": 1.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 4,
-              "tn": 1,
-              "fp": 0,
-              "fn": 0
-            }
-          },
-          "Q3": {
-            "accuracy": 0.8,
-            "precision": 0.8,
-            "recall": 1.0,
-            "f1_score": 0.8889,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 4,
-              "tn": 0,
-              "fp": 1,
-              "fn": 0
-            }
-          },
-          "Q4": {
-            "accuracy": 0.0,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 0,
-              "fp": 5,
-              "fn": 0
-            }
-          },
-          "Q5": {
-            "accuracy": 0.6,
-            "precision": 0.5,
-            "recall": 0.5,
-            "f1_score": 0.5,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 1,
-              "tn": 2,
-              "fp": 1,
-              "fn": 1
-            }
-          },
-          "Q6": {
-            "accuracy": 0.6,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 3,
               "fp": 0,
               "fn": 2
-            }
-          },
-          "Q7": {
-            "accuracy": 0.6,
-            "precision": 0.5,
-            "recall": 0.5,
-            "f1_score": 0.5,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 1,
-              "tn": 2,
-              "fp": 1,
-              "fn": 1
-            }
-          },
-          "Q8": {
-            "accuracy": 0.4,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 2,
-              "fp": 0,
-              "fn": 3
-            }
-          },
-          "Q9": {
-            "accuracy": 0.4,
-            "precision": 0.5,
-            "recall": 0.3333,
-            "f1_score": 0.4,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 1,
-              "tn": 1,
-              "fp": 1,
-              "fn": 2
-            }
-          }
-        },
-        "paper_comparisons": [
-          {
-            "paper_url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7612201/",
-            "paper_name": "The hyperfunction theory: An emerging paradigm for the biology of aging",
-            "paper_year": "2022",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/36096982/",
-            "paper_name": "Could aging evolve as a pathogen control strategy?",
-            "paper_year": "2022",
-            "questions": {
-              "Q1": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q2": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q3": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q6": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q7": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/40423632/",
-            "paper_name": "Causality of Aging Hallmarks",
-            "paper_year": "2025",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q7": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q8": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q9": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/38636560/",
-            "paper_name": "Aging as a loss of morphostatic information: A developmental bioelectricity perspective",
-            "paper_year": "2024",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q6": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q8": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q9": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              }
-            }
-          },
-          {
-            "paper_url": "https://pubmed.ncbi.nlm.nih.gov/38102202/",
-            "paper_name": "The Information Theory of Aging",
-            "paper_year": "2023",
-            "questions": {
-              "Q1": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q2": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q3": {
-                "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
-              },
-              "Q4": {
-                "manual": "No",
-                "predicted": "Yes",
-                "match": false
-              },
-              "Q5": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q6": {
-                "manual": "Yes",
-                "predicted": "No",
-                "match": false
-              },
-              "Q7": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q8": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
-              "Q9": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              }
-            }
-          }
-        ],
-        "num_papers": 5
-      },
-      "num_papers_classified": 5,
-      "f1_weighted": 0.3654,
-      "f1_macro": 0.3654,
-      "f1_micro": 0.5,
-      "accuracy_weighted": 0.5111,
-      "improvement_absolute": -0.2237,
-      "improvement_percent": -37.97
-    },
-    "specter_sbert": {
-      "model_key": "specter_sbert",
-      "model_name": "allenai/specter",
-      "approach": "sentence_bert",
-      "description": "SPECTER - Scientific paper embeddings",
-      "params": "110M",
-      "training_data": "Scientific papers from Semantic Scholar",
-      "timestamp": "2025-10-21T10:06:01.065769",
-      "error": null,
-      "init_time_sec": 0.01,
-      "model_info": {
-        "model_name": "allenai/specter",
-        "approach": "sentence_bert",
-        "device": "cpu",
-        "initialized": true,
-        "num_questions": 9,
-        "num_criteria": 4
-      },
-      "total_classification_time_sec": 31.46,
-      "avg_time_per_paper_sec": 6.29,
-      "metrics": {
-        "overall": {
-          "accuracy_micro": 0.4444,
-          "accuracy_macro": 0.4444444444444444,
-          "accuracy_weighted": 0.4444,
-          "precision_micro": 0.4286,
-          "recall_micro": 0.125,
-          "f1_micro": 0.1935,
-          "f1_macro": 0.1079,
-          "f1_weighted": 0.1079,
-          "total_support": 45
-        },
-        "per_question": {
-          "Q1": {
-            "accuracy": 0.2,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 1,
-              "fp": 0,
-              "fn": 4
-            }
-          },
-          "Q2": {
-            "accuracy": 0.2,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 1,
-              "fp": 0,
-              "fn": 4
             }
           },
           "Q3": {
@@ -2614,32 +501,6 @@
             }
           },
           "Q4": {
-            "accuracy": 1.0,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 5,
-              "fp": 0,
-              "fn": 0
-            }
-          },
-          "Q5": {
-            "accuracy": 0.4,
-            "precision": 0.4,
-            "recall": 1.0,
-            "f1_score": 0.5714,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 2,
-              "tn": 0,
-              "fp": 3,
-              "fn": 0
-            }
-          },
-          "Q6": {
             "accuracy": 0.6,
             "precision": 0.0,
             "recall": 0.0,
@@ -2648,47 +509,73 @@
             "confusion_matrix": {
               "tp": 0,
               "tn": 3,
-              "fp": 0,
-              "fn": 2
+              "fp": 2,
+              "fn": 0
+            }
+          },
+          "Q5": {
+            "accuracy": 0.8,
+            "precision": 0.6667,
+            "recall": 1.0,
+            "f1_score": 0.8,
+            "support": 5,
+            "confusion_matrix": {
+              "tp": 2,
+              "tn": 2,
+              "fp": 1,
+              "fn": 0
+            }
+          },
+          "Q6": {
+            "accuracy": 0.6,
+            "precision": 0.5,
+            "recall": 0.5,
+            "f1_score": 0.5,
+            "support": 5,
+            "confusion_matrix": {
+              "tp": 1,
+              "tn": 2,
+              "fp": 1,
+              "fn": 1
             }
           },
           "Q7": {
-            "accuracy": 0.4,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
+            "accuracy": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1_score": 1.0,
             "support": 5,
             "confusion_matrix": {
-              "tp": 0,
-              "tn": 2,
-              "fp": 1,
-              "fn": 2
+              "tp": 2,
+              "tn": 3,
+              "fp": 0,
+              "fn": 0
             }
           },
           "Q8": {
             "accuracy": 0.4,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
+            "precision": 0.5,
+            "recall": 0.3333,
+            "f1_score": 0.4,
             "support": 5,
             "confusion_matrix": {
-              "tp": 0,
-              "tn": 2,
-              "fp": 0,
-              "fn": 3
+              "tp": 1,
+              "tn": 1,
+              "fp": 1,
+              "fn": 2
             }
           },
           "Q9": {
-            "accuracy": 0.4,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
+            "accuracy": 0.6,
+            "precision": 0.6667,
+            "recall": 0.6667,
+            "f1_score": 0.6667,
             "support": 5,
             "confusion_matrix": {
-              "tp": 0,
-              "tn": 2,
-              "fp": 0,
-              "fn": 3
+              "tp": 2,
+              "tn": 1,
+              "fp": 1,
+              "fn": 1
             }
           }
         },
@@ -2710,8 +597,8 @@
               },
               "Q3": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q4": {
                 "manual": "No",
@@ -2720,8 +607,8 @@
               },
               "Q5": {
                 "manual": "No",
-                "predicted": "Yes",
-                "match": false
+                "predicted": "No",
+                "match": true
               },
               "Q6": {
                 "manual": "No",
@@ -2740,8 +627,8 @@
               },
               "Q9": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               }
             }
           },
@@ -2772,8 +659,8 @@
               },
               "Q5": {
                 "manual": "No",
-                "predicted": "Yes",
-                "match": false
+                "predicted": "No",
+                "match": true
               },
               "Q6": {
                 "manual": "Yes",
@@ -2782,8 +669,8 @@
               },
               "Q7": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q8": {
                 "manual": "Yes",
@@ -2792,8 +679,8 @@
               },
               "Q9": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               }
             }
           },
@@ -2809,8 +696,8 @@
               },
               "Q2": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q3": {
                 "manual": "Yes",
@@ -2819,8 +706,8 @@
               },
               "Q4": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q5": {
                 "manual": "Yes",
@@ -2834,13 +721,13 @@
               },
               "Q7": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q8": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q9": {
                 "manual": "Yes",
@@ -2861,8 +748,8 @@
               },
               "Q2": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q3": {
                 "manual": "Yes",
@@ -2871,8 +758,8 @@
               },
               "Q4": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q5": {
                 "manual": "No",
@@ -2881,8 +768,8 @@
               },
               "Q6": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q7": {
                 "manual": "No",
@@ -2918,8 +805,8 @@
               },
               "Q3": {
                 "manual": "Yes",
-                "predicted": "Yes",
-                "match": true
+                "predicted": "No",
+                "match": false
               },
               "Q4": {
                 "manual": "No",
@@ -2933,23 +820,23 @@
               },
               "Q6": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q7": {
+                "manual": "No",
+                "predicted": "No",
+                "match": true
+              },
+              "Q8": {
                 "manual": "No",
                 "predicted": "Yes",
                 "match": false
               },
-              "Q8": {
-                "manual": "No",
-                "predicted": "No",
-                "match": true
-              },
               "Q9": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               }
             }
           }
@@ -2957,43 +844,44 @@
         "num_papers": 5
       },
       "num_papers_classified": 5,
-      "f1_weighted": 0.1079,
-      "f1_macro": 0.1079,
-      "f1_micro": 0.1935,
-      "accuracy_weighted": 0.4444,
-      "improvement_absolute": -0.4812,
-      "improvement_percent": -81.68
+      "f1_weighted": 0.4926,
+      "f1_macro": 0.4926,
+      "f1_micro": 0.5366,
+      "accuracy_weighted": 0.5778,
+      "improvement_absolute": -0.0965,
+      "improvement_percent": -16.38
     },
-    "biolinkbert_sbert": {
-      "model_key": "biolinkbert_sbert",
-      "model_name": "michiyasunaga/BioLinkBERT-base",
+    "pubmedbert_sbert": {
+      "model_key": "pubmedbert_sbert",
+      "model_name": "pritamdeka/S-PubMedBert-MS-MARCO",
       "approach": "sentence_bert",
-      "description": "BioLinkBERT - Biomedical language model with document-level pre-training",
+      "description": "Sentence-BERT for biomedical text (PubMed)",
       "params": "110M",
-      "training_data": "PubMed + link prediction",
-      "timestamp": "2025-10-21T10:06:37.676224",
+      "training_data": "PubMed + MS MARCO",
+      "timestamp": "2025-10-21T17:04:16.759723",
       "error": null,
-      "init_time_sec": 0.02,
+      "requires_auth": false,
+      "init_time_sec": 0.01,
       "model_info": {
-        "model_name": "michiyasunaga/BioLinkBERT-base",
+        "model_name": "pritamdeka/S-PubMedBert-MS-MARCO",
         "approach": "sentence_bert",
         "device": "cpu",
         "initialized": true,
         "num_questions": 9,
         "num_criteria": 4
       },
-      "total_classification_time_sec": 27.86,
-      "avg_time_per_paper_sec": 5.57,
+      "total_classification_time_sec": 21.47,
+      "avg_time_per_paper_sec": 4.29,
       "metrics": {
         "overall": {
-          "accuracy_micro": 0.4889,
-          "accuracy_macro": 0.48888888888888893,
-          "accuracy_weighted": 0.4889,
-          "precision_micro": 0.5294,
-          "recall_micro": 0.375,
-          "f1_micro": 0.439,
-          "f1_macro": 0.3214,
-          "f1_weighted": 0.3214,
+          "accuracy_micro": 0.4667,
+          "accuracy_macro": 0.4666666666666667,
+          "accuracy_weighted": 0.4667,
+          "precision_micro": 0.5,
+          "recall_micro": 0.8333,
+          "f1_micro": 0.625,
+          "f1_macro": 0.5547,
+          "f1_weighted": 0.5547,
           "total_support": 45
         },
         "per_question": {
@@ -3011,107 +899,107 @@
             }
           },
           "Q2": {
+            "accuracy": 0.8,
+            "precision": 0.8,
+            "recall": 1.0,
+            "f1_score": 0.8889,
+            "support": 5,
+            "confusion_matrix": {
+              "tp": 4,
+              "tn": 0,
+              "fp": 1,
+              "fn": 0
+            }
+          },
+          "Q3": {
+            "accuracy": 0.8,
+            "precision": 0.8,
+            "recall": 1.0,
+            "f1_score": 0.8889,
+            "support": 5,
+            "confusion_matrix": {
+              "tp": 4,
+              "tn": 0,
+              "fp": 1,
+              "fn": 0
+            }
+          },
+          "Q4": {
+            "accuracy": 0.0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1_score": 0.0,
+            "support": 5,
+            "confusion_matrix": {
+              "tp": 0,
+              "tn": 0,
+              "fp": 5,
+              "fn": 0
+            }
+          },
+          "Q5": {
+            "accuracy": 0.4,
+            "precision": 0.4,
+            "recall": 1.0,
+            "f1_score": 0.5714,
+            "support": 5,
+            "confusion_matrix": {
+              "tp": 2,
+              "tn": 0,
+              "fp": 3,
+              "fn": 0
+            }
+          },
+          "Q6": {
+            "accuracy": 0.4,
+            "precision": 0.4,
+            "recall": 1.0,
+            "f1_score": 0.5714,
+            "support": 5,
+            "confusion_matrix": {
+              "tp": 2,
+              "tn": 0,
+              "fp": 3,
+              "fn": 0
+            }
+          },
+          "Q7": {
+            "accuracy": 0.4,
+            "precision": 0.4,
+            "recall": 1.0,
+            "f1_score": 0.5714,
+            "support": 5,
+            "confusion_matrix": {
+              "tp": 2,
+              "tn": 0,
+              "fp": 3,
+              "fn": 0
+            }
+          },
+          "Q8": {
             "accuracy": 0.6,
-            "precision": 0.75,
-            "recall": 0.75,
+            "precision": 0.6,
+            "recall": 1.0,
             "f1_score": 0.75,
             "support": 5,
             "confusion_matrix": {
               "tp": 3,
               "tn": 0,
-              "fp": 1,
-              "fn": 1
-            }
-          },
-          "Q3": {
-            "accuracy": 0.2,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 1,
-              "fp": 0,
-              "fn": 4
-            }
-          },
-          "Q4": {
-            "accuracy": 1.0,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 5,
-              "fp": 0,
+              "fp": 2,
               "fn": 0
             }
           },
-          "Q5": {
-            "accuracy": 0.6,
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1_score": 0.0,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 0,
-              "tn": 3,
-              "fp": 0,
-              "fn": 2
-            }
-          },
-          "Q6": {
-            "accuracy": 0.8,
-            "precision": 1.0,
-            "recall": 0.5,
-            "f1_score": 0.6667,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 1,
-              "tn": 3,
-              "fp": 0,
-              "fn": 1
-            }
-          },
-          "Q7": {
-            "accuracy": 0.2,
-            "precision": 0.25,
-            "recall": 0.5,
-            "f1_score": 0.3333,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 1,
-              "tn": 0,
-              "fp": 3,
-              "fn": 1
-            }
-          },
-          "Q8": {
-            "accuracy": 0.4,
-            "precision": 0.5,
-            "recall": 0.6667,
-            "f1_score": 0.5714,
-            "support": 5,
-            "confusion_matrix": {
-              "tp": 2,
-              "tn": 0,
-              "fp": 2,
-              "fn": 1
-            }
-          },
           "Q9": {
-            "accuracy": 0.4,
-            "precision": 0.5,
-            "recall": 0.6667,
-            "f1_score": 0.5714,
+            "accuracy": 0.6,
+            "precision": 0.6,
+            "recall": 1.0,
+            "f1_score": 0.75,
             "support": 5,
             "confusion_matrix": {
-              "tp": 2,
+              "tp": 3,
               "tn": 0,
               "fp": 2,
-              "fn": 1
+              "fn": 0
             }
           }
         },
@@ -3133,23 +1021,23 @@
               },
               "Q3": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q4": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q5": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q6": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q7": {
                 "manual": "No",
@@ -3185,18 +1073,18 @@
               },
               "Q3": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q4": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q5": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q6": {
                 "manual": "Yes",
@@ -3232,43 +1120,43 @@
               },
               "Q2": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q3": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q4": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q5": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q6": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q7": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q8": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q9": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               }
             }
           },
@@ -3289,23 +1177,23 @@
               },
               "Q3": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q4": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q5": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q6": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q7": {
                 "manual": "No",
@@ -3341,23 +1229,23 @@
               },
               "Q3": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q4": {
                 "manual": "No",
-                "predicted": "No",
-                "match": true
+                "predicted": "Yes",
+                "match": false
               },
               "Q5": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q6": {
                 "manual": "Yes",
-                "predicted": "No",
-                "match": false
+                "predicted": "Yes",
+                "match": true
               },
               "Q7": {
                 "manual": "No",
@@ -3380,46 +1268,23 @@
         "num_papers": 5
       },
       "num_papers_classified": 5,
-      "f1_weighted": 0.3214,
-      "f1_macro": 0.3214,
-      "f1_micro": 0.439,
-      "accuracy_weighted": 0.4889,
-      "improvement_absolute": -0.2677,
-      "improvement_percent": -45.44
-    },
-    "medgemma_4b": {
-      "model_key": "medgemma_4b",
-      "model_name": "google/medgemma-4b-it",
-      "approach": "llm_generation",
-      "description": "MedGemma 4B - Gemma 3 specialized for medical text and image analysis",
-      "params": "4B",
-      "training_data": "Medical texts + de-identified medical images (X-rays, dermatology, histopathology)",
-      "timestamp": "2025-10-21T10:07:10.183879",
-      "error": "You are trying to access a gated repo.\nMake sure to have access to it at https://huggingface.co/google/medgemma-4b-it.\n401 Client Error. (Request ID: Root=1-68f7311e-6ba71fbf79126480513ae8c9;9969c6a2-7bac-4e95-9d7b-1d57415cdcb5)\n\nCannot access gated repo for url https://huggingface.co/google/medgemma-4b-it/resolve/main/config.json.\nAccess to model google/medgemma-4b-it is restricted. You must have access to it and be authenticated to access it. Please log in.",
-      "init_time_sec": 0.01,
-      "metrics": null
-    },
-    "llama32_3b": {
-      "model_key": "llama32_3b",
-      "model_name": "meta-llama/Llama-3.2-3B-Instruct",
-      "approach": "llm_generation",
-      "description": "Llama 3.2 3B - Quantized edge-optimized model",
-      "params": "3B",
-      "training_data": "General + instructions",
-      "timestamp": "2025-10-21T10:07:12.822064",
-      "error": "You are trying to access a gated repo.\nMake sure to have access to it at https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct.\n401 Client Error. (Request ID: Root=1-68f73120-28dcb8fc4c53229e1cd903b6;b8be32d7-6f34-44d5-a7e5-c38aac8a0d8c)\n\nCannot access gated repo for url https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct/resolve/main/config.json.\nAccess to model meta-llama/Llama-3.2-3B-Instruct is restricted. You must have access to it and be authenticated to access it. Please log in.",
-      "init_time_sec": 0.02,
-      "metrics": null
+      "f1_weighted": 0.5547,
+      "f1_macro": 0.5547,
+      "f1_micro": 0.625,
+      "accuracy_weighted": 0.4667,
+      "improvement_absolute": -0.0344,
+      "improvement_percent": -5.84
     },
     "ministral_3b": {
       "model_key": "ministral_3b",
-      "model_name": "mistralai/Ministral-3B-2410",
+      "model_name": "mistralai/Voxtral-Mini-3B-2507",
       "approach": "llm_generation",
-      "description": "Ministral 3B - Edge-computing optimized, 128K context",
+      "description": "Voxtral Mini 3B - Audio-text aligned compact model",
       "params": "3B",
-      "training_data": "General data, edge-optimized",
-      "timestamp": "2025-10-21T10:07:15.309946",
-      "error": "mistralai/Ministral-3B-2410 is not a local folder and is not a valid model identifier listed on 'https://huggingface.co/models'\nIf this is a private repository, make sure to pass a token having permission to this repo either by logging in with `hf auth login` or by passing `token=<your_token>`",
+      "training_data": "Multimodal audio-text corpus",
+      "timestamp": "2025-10-21T17:04:45.165972",
+      "error": "Converting from SentencePiece and Tiktoken failed, if a converter for SentencePiece is available, provide a model path with a SentencePiece tokenizer.model file.Currently available slow->fast converters: ['AlbertTokenizer', 'BartTokenizer', 'BarthezTokenizer', 'BertTokenizer', 'BigBirdTokenizer', 'BlenderbotTokenizer', 'CamembertTokenizer', 'CLIPTokenizer', 'CodeGenTokenizer', 'ConvBertTokenizer', 'DebertaTokenizer', 'DebertaV2Tokenizer', 'DistilBertTokenizer', 'DPRReaderTokenizer', 'DPRQuestionEncoderTokenizer', 'DPRContextEncoderTokenizer', 'ElectraTokenizer', 'FNetTokenizer', 'FunnelTokenizer', 'GPT2Tokenizer', 'HerbertTokenizer', 'LayoutLMTokenizer', 'LayoutLMv2Tokenizer', 'LayoutLMv3Tokenizer', 'LayoutXLMTokenizer', 'LongformerTokenizer', 'LEDTokenizer', 'LxmertTokenizer', 'MarkupLMTokenizer', 'MBartTokenizer', 'MBart50Tokenizer', 'MPNetTokenizer', 'MobileBertTokenizer', 'MvpTokenizer', 'NllbTokenizer', 'OpenAIGPTTokenizer', 'PegasusTokenizer', 'Qwen2Tokenizer', 'RealmTokenizer', 'ReformerTokenizer', 'RemBertTokenizer', 'RetriBertTokenizer', 'RobertaTokenizer', 'RoFormerTokenizer', 'SeamlessM4TTokenizer', 'SqueezeBertTokenizer', 'T5Tokenizer', 'UdopTokenizer', 'WhisperTokenizer', 'XLMRobertaTokenizer', 'XLNetTokenizer', 'SplinterTokenizer', 'XGLMTokenizer', 'LlamaTokenizer', 'CodeLlamaTokenizer', 'GemmaTokenizer', 'Phi3Tokenizer']",
+      "requires_auth": true,
       "init_time_sec": 0.01,
       "metrics": null
     }

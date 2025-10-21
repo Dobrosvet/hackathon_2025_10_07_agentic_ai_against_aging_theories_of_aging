@@ -4,12 +4,41 @@ Supports multiple approaches: NLI, Sentence-BERT, Cross-Encoder, and traditional
 """
 
 import logging
+import os
+import importlib.util
+import random
 from typing import Dict, List, Any, Optional, Tuple
 import numpy as np
 import yaml
 from pathlib import Path
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
+
+BASE_DIR = Path(__file__).resolve().parent
+ENV_PATH = BASE_DIR.parent / ".env"
+
+
+def _load_env_from_file():
+    if not ENV_PATH.exists():
+        return
+
+    try:
+        content = ENV_PATH.read_text(encoding="utf-8")
+    except OSError as exc:
+        logger.warning(f"Failed to read .env file at {ENV_PATH}: {exc}")
+        return
+
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
 
 
 class QuestionsClassifierV2:
@@ -27,7 +56,9 @@ class QuestionsClassifierV2:
         model_name: str = None,
         approach: str = "auto",
         use_gpu: bool = True,
-        quantize: bool = False
+        quantize: bool = False,
+        requires_auth: Optional[bool] = None,
+        random_seed: Optional[int] = None
     ):
         """
         Initialize classifier
@@ -38,8 +69,12 @@ class QuestionsClassifierV2:
             approach: Classification approach (auto, nli, sentence_bert, cross_encoder, embedding)
             use_gpu: Use GPU if available
             quantize: Use quantization
+            requires_auth: Explicit flag that model requires Hugging Face authentication
+            random_seed: Seed for deterministic random predictions (used in random approach)
         """
         # Load configuration
+        _load_env_from_file()
+
         if config_path is None:
             config_path = Path(__file__).parent / "config.yaml"
 
@@ -49,12 +84,19 @@ class QuestionsClassifierV2:
         self.questions = self.config.get("questions", {})
         self.criteria = self.config.get("criteria", {})
         self.classifier_config = self.config.get("classifier", {})
+        self.huggingface_config = self.config.get("huggingface", {})
+        self._hf_env_var = self.huggingface_config.get("token_env_var")
+        self._progress_enabled = bool(self.classifier_config.get("show_progress", True))
 
         # Model settings
         self.model_name = model_name or self.classifier_config.get("model_name", "bioformers/bioformer-8L")
         self.approach = approach
         self._use_gpu = use_gpu
         self._quantize = quantize
+        self.requires_auth = requires_auth if requires_auth is not None else self._model_requires_auth()
+        self._hf_token = self._resolve_hf_token()
+        self._hf_transformers_kwargs = self._build_transformers_kwargs()
+        self.random_seed = random_seed if random_seed is not None else self.classifier_config.get("random_seed", 1337)
 
         # Models (lazy loading)
         self.model = None
@@ -69,8 +111,80 @@ class QuestionsClassifierV2:
         self.llm_model = None
         self.llm_tokenizer = None
         self.generation_config = None
+        self._checked_model_access = False
+        self._random = random.Random(self.random_seed)
+        self._paper_counter = 0
 
         logger.info(f"QuestionsClassifierV2 created: model={self.model_name}, approach={self.approach}")
+
+    def _model_requires_auth(self) -> bool:
+        required_models = self.huggingface_config.get("require_token_for_models", []) or []
+        model_name_lower = (self.model_name or "").lower()
+        return any(model_name_lower == item.lower() for item in required_models)
+
+    def _resolve_hf_token(self) -> Optional[str]:
+        token_value: Optional[str] = None
+
+        if self._hf_env_var:
+            raw_value = os.environ.get(self._hf_env_var)
+            if raw_value:
+                token_value = raw_value.strip() or None
+
+        if self.requires_auth and not token_value:
+            env_hint = self._hf_env_var or "HF_TOKEN"
+            raise RuntimeError(
+                f"Hugging Face token is required to load model '{self.model_name}'. "
+                f"Set the environment variable {env_hint} before running the service."
+            )
+
+        if not token_value and self.huggingface_config.get("fail_if_missing", False):
+            env_hint = self._hf_env_var or "HF_TOKEN"
+            raise RuntimeError(
+                f"Hugging Face token is not set (expected in {env_hint}). "
+                "Update your environment or disable private models."
+            )
+
+        if token_value:
+            logger.debug("Hugging Face token resolved from environment variable.")
+        else:
+            logger.debug("No Hugging Face token detected; using public model loading.")
+
+        return token_value
+
+    def _build_transformers_kwargs(self) -> Dict[str, Any]:
+        if not self._hf_token:
+            return {}
+        return {"token": self._hf_token}
+
+    def _ensure_model_access(self):
+        if self._checked_model_access:
+            return
+
+        if not self.model_name or Path(self.model_name).exists():
+            self._checked_model_access = True
+            return
+
+        try:
+            from huggingface_hub import HfApi
+            from huggingface_hub.errors import GatedRepoError, RepositoryNotFoundError
+            from requests.exceptions import HTTPError
+        except ImportError:
+            logger.warning("huggingface_hub not available; skipping remote model access validation.")
+            self._checked_model_access = True
+            return
+
+        api = HfApi()
+        try:
+            api.model_info(self.model_name, token=self._hf_token)
+        except (GatedRepoError, RepositoryNotFoundError, HTTPError, OSError) as err:
+            env_hint = self._hf_env_var or "HF_TOKEN"
+            raise RuntimeError(
+                f"Hugging Face access denied for '{self.model_name}'. "
+                f"Verify that the token ({env_hint}) has permissions or request access at "
+                f"https://huggingface.co/{self.model_name}."
+            ) from err
+
+        self._checked_model_access = True
 
     def _detect_approach(self, model_name: str) -> str:
         """
@@ -100,6 +214,10 @@ class QuestionsClassifierV2:
         if 'cross-encoder' in model_lower:
             return "cross_encoder"
 
+        # Random baseline
+        if 'random' in model_lower:
+            return "random"
+
         # Default to embedding
         return "embedding"
 
@@ -124,6 +242,16 @@ class QuestionsClassifierV2:
                 self.device = torch.device("cpu")
                 logger.info("Using CPU")
 
+            needs_remote_access = self.approach in {
+                "nli",
+                "sentence_bert",
+                "cross_encoder",
+                "embedding",
+                "llm_generation",
+            }
+            if needs_remote_access:
+                self._ensure_model_access()
+
             # Initialize based on approach
             if self.approach == "nli":
                 self._initialize_nli()
@@ -135,6 +263,8 @@ class QuestionsClassifierV2:
                 self._initialize_embedding()
             elif self.approach == "llm_generation":
                 self._initialize_llm_generation()
+            elif self.approach == "random":
+                self._initialize_random()
             else:
                 raise ValueError(f"Unknown approach: {self.approach}")
 
@@ -157,22 +287,33 @@ class QuestionsClassifierV2:
         # DeBERTa models require slow tokenizer
         if "deberta" in self.model_name.lower():
             logger.info("Detected DeBERTa model, using slow tokenizer...")
-            tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
-            model = AutoModelForSequenceClassification.from_pretrained(self.model_name)
-
-            self.nli_pipeline = pipeline(
-                "zero-shot-classification",
-                model=model,
-                tokenizer=tokenizer,
-                device=device_idx
+            tokenizer = AutoTokenizer.from_pretrained(
+                self.model_name,
+                use_fast=False,
+                **self._hf_transformers_kwargs
             )
+            model = AutoModelForSequenceClassification.from_pretrained(
+                self.model_name,
+                **self._hf_transformers_kwargs
+            )
+
+            pipeline_kwargs = {
+                "task": "zero-shot-classification",
+                "model": model,
+                "tokenizer": tokenizer,
+                "device": device_idx,
+            }
+            self.nli_pipeline = pipeline(**pipeline_kwargs)
         else:
             # Other models can use fast tokenizer
-            self.nli_pipeline = pipeline(
-                "zero-shot-classification",
-                model=self.model_name,
-                device=device_idx
-            )
+            pipeline_kwargs = {
+                "task": "zero-shot-classification",
+                "model": self.model_name,
+                "device": device_idx,
+            }
+            if self._hf_token:
+                pipeline_kwargs["token"] = self._hf_token
+            self.nli_pipeline = pipeline(**pipeline_kwargs)
 
         logger.info("NLI pipeline loaded successfully")
 
@@ -182,7 +323,11 @@ class QuestionsClassifierV2:
 
         logger.info(f"Loading Sentence-BERT model: {self.model_name}...")
 
-        self.sbert_model = SentenceTransformer(self.model_name)
+        sbert_kwargs = {}
+        if self._hf_token:
+            sbert_kwargs["token"] = self._hf_token
+
+        self.sbert_model = SentenceTransformer(self.model_name, **sbert_kwargs)
 
         # Move to device
         if self.device.type == "cuda":
@@ -196,7 +341,11 @@ class QuestionsClassifierV2:
 
         logger.info(f"Loading Cross-Encoder model: {self.model_name}...")
 
-        self.cross_encoder = CrossEncoder(self.model_name)
+        cross_kwargs = {}
+        if self._hf_token:
+            cross_kwargs["token"] = self._hf_token
+
+        self.cross_encoder = CrossEncoder(self.model_name, **cross_kwargs)
 
         logger.info("Cross-Encoder loaded successfully")
 
@@ -207,8 +356,14 @@ class QuestionsClassifierV2:
 
         logger.info(f"Loading embedding model: {self.model_name}...")
 
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        self.model = AutoModel.from_pretrained(self.model_name)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model_name,
+            **self._hf_transformers_kwargs
+        )
+        self.model = AutoModel.from_pretrained(
+            self.model_name,
+            **self._hf_transformers_kwargs
+        )
 
         # Quantization
         if self._quantize and self.device.type == "cuda":
@@ -234,24 +389,31 @@ class QuestionsClassifierV2:
 
         logger.info(f"Loading LLM generation model: {self.model_name}...")
 
-        # Configure 8-bit quantization for GTX 1070 8GB
         quantization_config = None
-        if self._quantize or self.device.type == "cuda":
-            try:
+
+        if self._quantize:
+            if self.device.type != "cuda":
+                logger.info(
+                    "Quantization requested but running on CPU; disabling quantization and using float32 weights."
+                )
+            else:
+                if importlib.util.find_spec("bitsandbytes") is None:
+                    raise RuntimeError(
+                        "bitsandbytes is required for 8-bit quantization but is not installed. "
+                        "Install it inside the poetry environment before running the classifier."
+                    )
                 quantization_config = BitsAndBytesConfig(
                     load_in_8bit=True,
                     llm_int8_threshold=6.0,
                     llm_int8_has_fp16_weight=False
                 )
-                logger.info("Using 8-bit quantization for LLM")
-            except Exception as e:
-                logger.warning(f"8-bit quantization setup failed: {e}, loading without quantization")
-                quantization_config = None
+                logger.info("Using 8-bit quantization via bitsandbytes")
 
         # Load tokenizer
         self.llm_tokenizer = AutoTokenizer.from_pretrained(
             self.model_name,
-            trust_remote_code=True
+            trust_remote_code=True,
+            **self._hf_transformers_kwargs
         )
 
         # Set padding token if not present
@@ -259,14 +421,28 @@ class QuestionsClassifierV2:
             self.llm_tokenizer.pad_token = self.llm_tokenizer.eos_token
 
         # Load model with quantization
-        model_kwargs = {
+        model_kwargs: Dict[str, Any] = {
             "trust_remote_code": True,
-            "torch_dtype": torch.float16 if self.device.type == "cuda" else torch.float32,
+            "low_cpu_mem_usage": True,
         }
+
+        if self._hf_transformers_kwargs:
+            model_kwargs.update(self._hf_transformers_kwargs)
 
         if quantization_config is not None:
             model_kwargs["quantization_config"] = quantization_config
             model_kwargs["device_map"] = "auto"
+        else:
+            if self.device.type == "cuda":
+                device_index = self.device.index if self.device.index is not None else 0
+                model_kwargs["torch_dtype"] = torch.float16
+                model_kwargs["device_map"] = {"": device_index}
+                model_kwargs["max_memory"] = {
+                    f"cuda:{device_index}": "7GiB",
+                    "cpu": "8GiB"
+                }
+            else:
+                model_kwargs["torch_dtype"] = torch.float32
 
         try:
             self.llm_model = AutoModelForCausalLM.from_pretrained(
@@ -275,7 +451,7 @@ class QuestionsClassifierV2:
             )
 
             # Move to device if not using device_map
-            if quantization_config is None:
+            if "device_map" not in model_kwargs:
                 self.llm_model.to(self.device)
 
             self.llm_model.eval()
@@ -294,6 +470,10 @@ class QuestionsClassifierV2:
         except Exception as e:
             logger.error(f"Failed to load LLM model: {e}")
             raise
+
+    def _initialize_random(self):
+        """Initialize random baseline (no external resources)."""
+        logger.info(f"Using deterministic random baseline with seed {self.random_seed}")
 
     def _classify_question_nli(
         self,
@@ -632,6 +812,60 @@ class QuestionsClassifierV2:
                 "fragments": []
             }
 
+    def _classify_question_random(
+        self,
+        text: str,
+        question_id: str,
+        question_config: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Generate deterministic random answers"""
+        self._initialize()
+
+        question_type = question_config.get("type", "binary")
+
+        if question_type == "binary":
+            answer = self._random.choice([True, False])
+            return {
+                "question_id": question_id,
+                "answer": answer,
+                "confidence": 0.5,
+                "scores": {
+                    "yes": 0.5,
+                    "no": 0.5
+                },
+                "fragments": []
+            }
+        elif question_type == "multiclass":
+            options = question_config.get("options", [])
+            if not options:
+                return {
+                    "question_id": question_id,
+                    "answer": None,
+                    "confidence": 0.0,
+                    "all_options": [],
+                    "fragments": []
+                }
+            answer = self._random.choice(options)
+            uniform_score = round(1.0 / len(options), 3)
+            return {
+                "question_id": question_id,
+                "answer": answer,
+                "confidence": uniform_score,
+                "all_options": [
+                    {"option": opt, "score": uniform_score}
+                    for opt in options
+                ],
+                "fragments": []
+            }
+        else:
+            answer = self._random.choice([True, False])
+            return {
+                "question_id": question_id,
+                "answer": answer,
+                "confidence": 0.5,
+                "fragments": []
+            }
+
     def _parse_llm_response(self, response_text: str) -> Tuple[Optional[bool], float]:
         """
         Parse LLM response to extract Yes/No answer
@@ -706,13 +940,21 @@ Question: {question_text}
 Answer with ONLY "Yes" or "No": """
 
             # Tokenize
-            inputs = self.llm_tokenizer(
+            tokenized = self.llm_tokenizer(
                 prompt,
                 return_tensors="pt",
                 truncation=True,
                 max_length=2048
             )
-            inputs = {k: v.to(self.llm_model.device) for k, v in inputs.items()}
+            target_device = self.device
+            if hasattr(self.llm_model, "hf_device_map") and self.llm_model.hf_device_map:
+                first_device = next(
+                    (device for device in self.llm_model.hf_device_map.values() if isinstance(device, str) and device not in {"disk"}),  # type: ignore[attr-defined]
+                    "cpu"
+                )
+                target_device = torch.device(first_device) if isinstance(first_device, str) else self.device
+
+            inputs = {k: v.to(target_device) for k, v in tokenized.items()}
 
             # Generate
             with torch.no_grad():
@@ -759,13 +1001,21 @@ Options: {options_str}
 Answer with ONLY one of the options: """
 
             # Tokenize
-            inputs = self.llm_tokenizer(
+            tokenized = self.llm_tokenizer(
                 prompt,
                 return_tensors="pt",
                 truncation=True,
                 max_length=2048
             )
-            inputs = {k: v.to(self.llm_model.device) for k, v in inputs.items()}
+            target_device = self.device
+            if hasattr(self.llm_model, "hf_device_map") and self.llm_model.hf_device_map:
+                first_device = next(
+                    (device for device in self.llm_model.hf_device_map.values() if isinstance(device, str) and device not in {"disk"}),  # type: ignore[attr-defined]
+                    "cpu"
+                )
+                target_device = torch.device(first_device) if isinstance(first_device, str) else self.device
+
+            inputs = {k: v.to(target_device) for k, v in tokenized.items()}
 
             # Generate
             with torch.no_grad():
@@ -839,6 +1089,8 @@ Answer with ONLY one of the options: """
             return self._classify_question_embedding(text, question_id, question_config)
         elif self.approach == "llm_generation":
             return self._classify_question_llm(text, question_id, question_config)
+        elif self.approach == "random":
+            return self._classify_question_random(text, question_id, question_config)
         else:
             raise ValueError(f"Unknown approach: {self.approach}")
 
@@ -854,6 +1106,11 @@ Answer with ONLY one of the options: """
         """
         logger.info(f"Starting paper classification with {self.approach} approach...")
 
+        if self.approach == "random":
+            paper_seed = (self.random_seed + self._paper_counter) & 0xFFFFFFFF
+            self._paper_counter += 1
+            self._random = random.Random(paper_seed)
+
         results = {
             "questions": {},
             "criteria": {},
@@ -863,13 +1120,27 @@ Answer with ONLY one of the options: """
         }
 
         # Classify questions
-        for q_id, q_config in self.questions.items():
+        question_items = list(self.questions.items())
+        question_iterator = tqdm(
+            question_items,
+            desc="Questions",
+            leave=False,
+            disable=not self._progress_enabled
+        )
+        for q_id, q_config in question_iterator:
             logger.info(f"Classifying {q_id}...")
             result = self.classify_question(full_text, q_id, q_config)
             results["questions"][q_id] = result
 
         # Classify criteria
-        for c_id, c_config in self.criteria.items():
+        criteria_items = list(self.criteria.items())
+        criteria_iterator = tqdm(
+            criteria_items,
+            desc="Criteria",
+            leave=False,
+            disable=not self._progress_enabled
+        )
+        for c_id, c_config in criteria_iterator:
             logger.info(f"Classifying {c_id}...")
             result = self.classify_question(full_text, c_id, c_config)
             results["criteria"][c_id] = result

@@ -1,34 +1,34 @@
 {
-  "model_key": "bart_nli",
-  "model_name": "facebook/bart-large-mnli",
-  "approach": "nli",
-  "description": "BART-Large fine-tuned on MNLI",
-  "params": "406M",
-  "training_data": "MNLI (Multi-Genre NLI)",
-  "timestamp": "2025-10-21T14:41:29.550399",
+  "model_key": "random_baseline",
+  "model_name": "random_baseline",
+  "approach": "random",
+  "description": "Deterministic random baseline (fixed seed)",
+  "params": "-",
+  "training_data": "None",
+  "timestamp": "2025-10-21T17:17:36.747000",
   "error": null,
   "requires_auth": false,
   "init_time_sec": 0.01,
   "model_info": {
-    "model_name": "facebook/bart-large-mnli",
-    "approach": "nli",
+    "model_name": "random_baseline",
+    "approach": "random",
     "device": "cpu",
     "initialized": true,
     "num_questions": 9,
     "num_criteria": 4
   },
-  "total_classification_time_sec": 196.67,
-  "avg_time_per_paper_sec": 39.33,
+  "total_classification_time_sec": 0.02,
+  "avg_time_per_paper_sec": 0.0,
   "metrics": {
     "overall": {
-      "accuracy_micro": 0.4667,
-      "accuracy_macro": 0.4666666666666667,
-      "accuracy_weighted": 0.4667,
-      "precision_micro": 0.5,
-      "recall_micro": 0.6667,
-      "f1_micro": 0.5714,
-      "f1_macro": 0.4973,
-      "f1_weighted": 0.4973,
+      "accuracy_micro": 0.5778,
+      "accuracy_macro": 0.5777777777777777,
+      "accuracy_weighted": 0.5778,
+      "precision_micro": 0.6471,
+      "recall_micro": 0.4583,
+      "f1_micro": 0.5366,
+      "f1_macro": 0.4926,
+      "f1_weighted": 0.4926,
       "total_support": 45
     },
     "per_question": {
@@ -46,106 +46,106 @@
         }
       },
       "Q2": {
-        "accuracy": 1.0,
+        "accuracy": 0.6,
         "precision": 1.0,
-        "recall": 1.0,
-        "f1_score": 1.0,
+        "recall": 0.5,
+        "f1_score": 0.6667,
         "support": 5,
         "confusion_matrix": {
-          "tp": 4,
+          "tp": 2,
           "tn": 1,
           "fp": 0,
-          "fn": 0
+          "fn": 2
         }
       },
       "Q3": {
-        "accuracy": 1.0,
+        "accuracy": 0.4,
         "precision": 1.0,
-        "recall": 1.0,
-        "f1_score": 1.0,
+        "recall": 0.25,
+        "f1_score": 0.4,
         "support": 5,
         "confusion_matrix": {
-          "tp": 4,
+          "tp": 1,
           "tn": 1,
           "fp": 0,
-          "fn": 0
+          "fn": 3
         }
       },
       "Q4": {
-        "accuracy": 0.2,
+        "accuracy": 0.6,
         "precision": 0.0,
         "recall": 0.0,
         "f1_score": 0.0,
         "support": 5,
         "confusion_matrix": {
           "tp": 0,
-          "tn": 1,
-          "fp": 4,
-          "fn": 0
-        }
-      },
-      "Q5": {
-        "accuracy": 0.6,
-        "precision": 0.5,
-        "recall": 1.0,
-        "f1_score": 0.6667,
-        "support": 5,
-        "confusion_matrix": {
-          "tp": 2,
-          "tn": 1,
+          "tn": 3,
           "fp": 2,
           "fn": 0
         }
       },
+      "Q5": {
+        "accuracy": 0.8,
+        "precision": 0.6667,
+        "recall": 1.0,
+        "f1_score": 0.8,
+        "support": 5,
+        "confusion_matrix": {
+          "tp": 2,
+          "tn": 2,
+          "fp": 1,
+          "fn": 0
+        }
+      },
       "Q6": {
-        "accuracy": 0.2,
-        "precision": 0.25,
+        "accuracy": 0.6,
+        "precision": 0.5,
         "recall": 0.5,
-        "f1_score": 0.3333,
+        "f1_score": 0.5,
         "support": 5,
         "confusion_matrix": {
           "tp": 1,
-          "tn": 0,
-          "fp": 3,
+          "tn": 2,
+          "fp": 1,
           "fn": 1
         }
       },
       "Q7": {
-        "accuracy": 0.2,
-        "precision": 0.25,
-        "recall": 0.5,
-        "f1_score": 0.3333,
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1_score": 1.0,
         "support": 5,
         "confusion_matrix": {
-          "tp": 1,
-          "tn": 0,
-          "fp": 3,
-          "fn": 1
+          "tp": 2,
+          "tn": 3,
+          "fp": 0,
+          "fn": 0
         }
       },
       "Q8": {
         "accuracy": 0.4,
         "precision": 0.5,
-        "recall": 0.6667,
-        "f1_score": 0.5714,
+        "recall": 0.3333,
+        "f1_score": 0.4,
         "support": 5,
         "confusion_matrix": {
-          "tp": 2,
-          "tn": 0,
-          "fp": 2,
-          "fn": 1
+          "tp": 1,
+          "tn": 1,
+          "fp": 1,
+          "fn": 2
         }
       },
       "Q9": {
-        "accuracy": 0.4,
-        "precision": 0.5,
+        "accuracy": 0.6,
+        "precision": 0.6667,
         "recall": 0.6667,
-        "f1_score": 0.5714,
+        "f1_score": 0.6667,
         "support": 5,
         "confusion_matrix": {
           "tp": 2,
-          "tn": 0,
-          "fp": 2,
+          "tn": 1,
+          "fp": 1,
           "fn": 1
         }
       }
@@ -163,8 +163,8 @@
           },
           "Q2": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q3": {
             "manual": "Yes",
@@ -173,28 +173,28 @@
           },
           "Q4": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q5": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q6": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q7": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q8": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q9": {
             "manual": "Yes",
@@ -240,8 +240,8 @@
           },
           "Q7": {
             "manual": "Yes",
-            "predicted": "No",
-            "match": false
+            "predicted": "Yes",
+            "match": true
           },
           "Q8": {
             "manual": "Yes",
@@ -250,8 +250,8 @@
           },
           "Q9": {
             "manual": "Yes",
-            "predicted": "No",
-            "match": false
+            "predicted": "Yes",
+            "match": true
           }
         }
       },
@@ -272,8 +272,8 @@
           },
           "Q3": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q4": {
             "manual": "No",
@@ -287,8 +287,8 @@
           },
           "Q6": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q7": {
             "manual": "Yes",
@@ -302,8 +302,8 @@
           },
           "Q9": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           }
         }
       },
@@ -324,8 +324,8 @@
           },
           "Q3": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q4": {
             "manual": "No",
@@ -344,18 +344,18 @@
           },
           "Q7": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q8": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q9": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           }
         }
       },
@@ -371,18 +371,18 @@
           },
           "Q2": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q3": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q4": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q5": {
             "manual": "Yes",
@@ -396,8 +396,8 @@
           },
           "Q7": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q8": {
             "manual": "No",
@@ -415,10 +415,10 @@
     "num_papers": 5
   },
   "num_papers_classified": 5,
-  "f1_weighted": 0.4973,
-  "f1_macro": 0.4973,
-  "f1_micro": 0.5714,
-  "accuracy_weighted": 0.4667,
-  "improvement_absolute": -0.0918,
-  "improvement_percent": -15.58
+  "f1_weighted": 0.4926,
+  "f1_macro": 0.4926,
+  "f1_micro": 0.5366,
+  "accuracy_weighted": 0.5778,
+  "improvement_absolute": -0.0965,
+  "improvement_percent": -16.38
 }

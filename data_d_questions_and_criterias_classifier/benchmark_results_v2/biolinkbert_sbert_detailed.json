@@ -5,8 +5,9 @@
   "description": "BioLinkBERT - Biomedical language model with document-level pre-training",
   "params": "110M",
   "training_data": "PubMed + link prediction",
-  "timestamp": "2025-10-21T10:06:37.676224",
+  "timestamp": "2025-10-21T14:47:22.529471",
   "error": null,
+  "requires_auth": false,
   "init_time_sec": 0.02,
   "model_info": {
     "model_name": "michiyasunaga/BioLinkBERT-base",
@@ -16,8 +17,8 @@
     "num_questions": 9,
     "num_criteria": 4
   },
-  "total_classification_time_sec": 27.86,
-  "avg_time_per_paper_sec": 5.57,
+  "total_classification_time_sec": 30.47,
+  "avg_time_per_paper_sec": 6.09,
   "metrics": {
     "overall": {
       "accuracy_micro": 0.4889,

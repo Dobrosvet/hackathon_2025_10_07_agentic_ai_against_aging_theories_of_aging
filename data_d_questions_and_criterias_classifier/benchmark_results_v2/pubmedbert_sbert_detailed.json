@@ -5,8 +5,9 @@
   "description": "Sentence-BERT for biomedical text (PubMed)",
   "params": "110M",
   "training_data": "PubMed + MS MARCO",
-  "timestamp": "2025-10-21T10:04:47.151463",
+  "timestamp": "2025-10-21T17:17:38.886426",
   "error": null,
+  "requires_auth": false,
   "init_time_sec": 0.02,
   "model_info": {
     "model_name": "pritamdeka/S-PubMedBert-MS-MARCO",
@@ -16,8 +17,8 @@
     "num_questions": 9,
     "num_criteria": 4
   },
-  "total_classification_time_sec": 20.23,
-  "avg_time_per_paper_sec": 4.05,
+  "total_classification_time_sec": 21.17,
+  "avg_time_per_paper_sec": 4.23,
   "metrics": {
     "overall": {
       "accuracy_micro": 0.4667,

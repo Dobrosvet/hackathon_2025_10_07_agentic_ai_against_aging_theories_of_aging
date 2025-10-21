@@ -171,6 +171,48 @@ Stop-AllNodeProcesses
 Write-Host "Cleanup complete." -ForegroundColor Green
 Write-Host ""
 
+# Load environment variables from .env if present
+$envFile = Join-Path $ScriptDir ".env"
+if (Test-Path $envFile) {
+    Write-Host "Loading environment variables from .env..." -ForegroundColor Cyan
+    $envLines = Get-Content $envFile
+    foreach ($rawLine in $envLines) {
+        $line = $rawLine.Trim()
+        if ([string]::IsNullOrWhiteSpace($line) -or $line.StartsWith("#")) {
+            continue
+        }
+
+        $parts = $line -split "=", 2
+        if ($parts.Count -ne 2) {
+            Write-Host "  - Skipping malformed line: $line" -ForegroundColor Yellow
+            continue
+        }
+
+        $key = $parts[0].Trim()
+        $value = $parts[1].Trim()
+        $value = $value.Trim('"')
+        $value = $value.Trim("'")
+
+        if (![string]::IsNullOrEmpty($key)) {
+            [System.Environment]::SetEnvironmentVariable($key, $value, [System.EnvironmentVariableTarget]::Process)
+            Write-Host ("  - Loaded {0} from .env" -f $key) -ForegroundColor Gray
+        }
+    }
+
+    Write-Host "Environment variables loaded." -ForegroundColor Green
+    Write-Host ""
+}
+
+# Validate Hugging Face token before starting services
+$hfToken = $Env:HF_TOKEN
+if (-not $hfToken -or $hfToken.Trim().Length -eq 0) {
+    Write-Host "HF_TOKEN environment variable is not set. Cannot start gated models." -ForegroundColor Red
+    Write-Host "Set it in this PowerShell session before running the launcher, e.g.:" -ForegroundColor Red
+    Write-Host "  $Env:HF_TOKEN = 'hf_xxx...'" -ForegroundColor Red
+    Write-Host "Or persist it for future sessions with: setx HF_TOKEN \"hf_xxx...\"" -ForegroundColor Red
+    exit 1
+}
+
 # Start services in background
 Write-Host "Starting services..." -ForegroundColor Cyan
 
@@ -252,7 +294,7 @@ $microserviceCProcess = Start-Process -FilePath "poetry" `
 Start-Sleep -Seconds 3
 
 # Start Microservice D - Questions & Criterias Classifier
-Write-Host "  - Starting Questions & Criterias Classifier..." -ForegroundColor Green
+Write-Host "  - Starting Questions and Criterias Classifier..." -ForegroundColor Green
 $microserviceDPath = "$ScriptDir\data_d_questions_and_criterias_classifier"
 
 # Check if dependencies are installed
@@ -303,7 +345,7 @@ $microserviceDProcess = Start-Process -FilePath "poetry" `
 Start-Sleep -Seconds 5
 
 # Start Microservice X - Database Viewer & Export
-Write-Host "  - Starting Database Viewer & Export..." -ForegroundColor Green
+Write-Host "  - Starting Database Viewer and Export..." -ForegroundColor Green
 $microserviceXPath = "$ScriptDir\data_x_view_db_and_export_to_tables"
 
 # Check if dependencies are installed
@@ -328,7 +370,11 @@ Start-Sleep -Seconds 3
 # Start Client
 Write-Host "  - Starting Client Dashboard..." -ForegroundColor Green
 $clientPath = "$ScriptDir\client"
-$clientProcess = Start-Process -FilePath "npm" `
+if (-not (Get-Command bun -ErrorAction SilentlyContinue)) {
+    Write-Host "    bun executable is not available in PATH. Install bun before starting the client." -ForegroundColor Red
+    exit 1
+}
+$clientProcess = Start-Process -FilePath "bun" `
     -ArgumentList "run", "dev" `
     -WorkingDirectory $clientPath `
     -PassThru `
@@ -370,11 +416,11 @@ Write-Host "  - PubMed URLs API: http://127.0.0.1:8002" -ForegroundColor White
 Write-Host "  - Full Text API: http://127.0.0.1:8003" -ForegroundColor White
 Write-Host "  - Classifier API: http://127.0.0.1:8004" -ForegroundColor White
 Write-Host "  - Questions Classifier API: http://127.0.0.1:8005" -ForegroundColor White
-Write-Host "  - DB Viewer & Export API: http://127.0.0.1:8006" -ForegroundColor White
+Write-Host "  - DB Viewer and Export API: http://127.0.0.1:8006" -ForegroundColor White
 Write-Host "  - Qdrant Dashboard: http://localhost:8080" -ForegroundColor White
 Write-Host "  - Qdrant API: http://localhost:6333" -ForegroundColor White
 Write-Host ""
 Write-Host "Services are running in background." -ForegroundColor Gray
-Write-Host "To stop services, run this script again or use: Stop-Process -Id <PID>" -ForegroundColor Gray
+Write-Host "To stop services, run this script again or use: Stop-Process -Id 'PID'" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Tip: Check logs in the data\logs folder" -ForegroundColor Cyan

@@ -4,16 +4,45 @@ Benchmarks NLI, Sentence-BERT, Cross-Encoder, and traditional embedding models
 """
 
 import logging
+import os
 import sys
 import time
 import json
+import copy
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 import yaml
 import numpy as np
+from tqdm import tqdm
 
-sys.path.append(str(Path(__file__).parent))
+MODULE_DIR = Path(__file__).resolve().parent
+ENV_PATH = MODULE_DIR.parent / ".env"
+
+
+def _load_env_from_file():
+    if not ENV_PATH.exists():
+        return
+
+    try:
+        content = ENV_PATH.read_text(encoding="utf-8")
+    except OSError as exc:
+        logging.getLogger(__name__).warning(f"Failed to read .env file at {ENV_PATH}: {exc}")
+        return
+
+    for raw_line in content.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+sys.path.append(str(MODULE_DIR))
 
 from questions_classifier_v2 import QuestionsClassifierV2
 from validation_metrics import ValidationMetrics
@@ -41,6 +70,8 @@ class ModelBenchmarkV2:
             models_config_path: Path to models_config_v2.yaml
             config_path: Path to config.yaml
         """
+        _load_env_from_file()
+
         # Load models configuration
         if models_config_path is None:
             models_config_path = Path(__file__).parent / "models_config_v2.yaml"
@@ -57,6 +88,9 @@ class ModelBenchmarkV2:
 
         # Initialize ValidationMetrics
         self.metrics_calculator = ValidationMetrics()
+        self.huggingface_config = self.config.get("huggingface", {})
+        self._hf_env_var = self.huggingface_config.get("token_env_var")
+        self._hf_token_cached: Optional[str] = None
 
         # Qdrant storage
         qdrant_config = self.config.get("qdrant", {})
@@ -76,10 +110,41 @@ class ModelBenchmarkV2:
 
         # Results directory
         benchmark_config = self.models_config.get("benchmark", {})
+        self.benchmark_config = benchmark_config
+        self.show_progress = benchmark_config.get("show_progress", True)
         self.results_dir = Path(__file__).parent / benchmark_config.get("results_dir", "benchmark_results_v2")
         self.results_dir.mkdir(exist_ok=True)
 
         logger.info("ModelBenchmarkV2 initialized")
+
+    def _get_hf_token(self, required: bool = False) -> Optional[str]:
+        if self._hf_token_cached is None:
+            token_value = None
+            if self._hf_env_var:
+                raw = os.environ.get(self._hf_env_var)
+                if raw:
+                    token_value = raw.strip() or None
+            self._hf_token_cached = token_value
+
+        if required and not self._hf_token_cached:
+            env_hint = self._hf_env_var or "HF_TOKEN"
+            raise RuntimeError(
+                f"Hugging Face token is required but not set. "
+                f"Set the environment variable {env_hint} before running the benchmark."
+            )
+
+        return self._hf_token_cached
+
+    def _model_requires_auth(self, model_name: Optional[str], explicit_flag: Optional[bool]) -> bool:
+        if explicit_flag is not None:
+            return explicit_flag
+
+        if not model_name:
+            return False
+
+        required_models = self.huggingface_config.get("require_token_for_models", []) or []
+        model_lower = model_name.lower()
+        return any(model_lower == item.lower() for item in required_models)
 
     def get_validation_papers(self) -> List[Dict[str, Any]]:
         """Get validation papers from Qdrant"""
@@ -138,9 +203,20 @@ class ModelBenchmarkV2:
         }
 
         try:
-            # Create temporary config
-            temp_config = self.config.copy()
+            requires_auth = self._model_requires_auth(model_config.get("name"), model_config.get("requires_auth"))
+            quantize = bool(model_config.get("generation_config", {}).get("quantization", False))
+            random_seed = model_config.get("random_config", {}).get("seed")
+            self._get_hf_token(required=requires_auth)
+            result["requires_auth"] = requires_auth
+
+            # Create temporary config (deep copy to avoid mutating the base config)
+            temp_config = copy.deepcopy(self.config)
+            temp_config.setdefault("classifier", {})
             temp_config["classifier"]["model_name"] = model_config.get("name")
+            temp_config["classifier"]["quantize"] = quantize
+            temp_config["classifier"]["show_progress"] = self.show_progress
+            if random_seed is not None:
+                temp_config["classifier"]["random_seed"] = random_seed
 
             temp_config_path = self.results_dir / f"temp_config_{model_key}.yaml"
             with open(temp_config_path, 'w', encoding='utf-8') as f:
@@ -155,7 +231,9 @@ class ModelBenchmarkV2:
                 model_name=model_config.get("name"),
                 approach=model_config.get("approach", "auto"),
                 use_gpu=self.models_config["benchmark"].get("use_gpu", True),
-                quantize=False
+                quantize=quantize,
+                requires_auth=requires_auth,
+                random_seed=random_seed
             )
 
             init_time = time.time() - start_init
@@ -173,15 +251,23 @@ class ModelBenchmarkV2:
             start_classification = time.time()
             classified_papers = []
 
-            for i, paper in enumerate(validation_papers):
-                paper_url = paper.get("paper_url", f"paper_{i}")
+            total_papers = len(validation_papers)
+            paper_iterator = tqdm(
+                validation_papers,
+                desc=f"{model_key} - papers",
+                leave=False,
+                disable=not self.show_progress
+            )
+
+            for index, paper in enumerate(paper_iterator, start=1):
+                paper_url = paper.get("paper_url", f"paper_{index}")
                 full_text = paper.get("full_text", "")
 
                 if not full_text:
                     logger.warning(f"Paper {paper_url} has no full_text!")
                     continue
 
-                logger.info(f"  [{i+1}/{len(validation_papers)}] Classifying {paper_url}...")
+                logger.info(f"  [{index}/{total_papers}] Classifying {paper_url}...")
 
                 paper_start = time.time()
 
@@ -280,7 +366,6 @@ class ModelBenchmarkV2:
         logger.info("MODEL BENCHMARK V2 STARTED")
         logger.info("="*80 + "\n")
 
-        # Get validation data
         validation_papers = self.get_validation_papers()
 
         if not validation_papers:
@@ -289,7 +374,6 @@ class ModelBenchmarkV2:
 
         logger.info(f"Using {len(validation_papers)} validation papers\n")
 
-        # Get enabled models
         models = self.models_config.get("models", {})
         enabled_models = {
             key: config for key, config in models.items()
@@ -300,22 +384,28 @@ class ModelBenchmarkV2:
             logger.error("No models enabled!")
             return {"error": "No models enabled"}
 
-        logger.info(f"Will benchmark {len(enabled_models)} models:")
-        for key, config in enabled_models.items():
+        model_items = list(enabled_models.items())
+
+        logger.info(f"Will benchmark {len(model_items)} models:")
+        for key, config in model_items:
             logger.info(f"  - {key}: {config.get('name')} ({config.get('approach')})")
         logger.info("")
 
-        # Benchmark each model
-        benchmark_results = {}
+        benchmark_results: Dict[str, Any] = {}
 
-        for model_key, model_config in enabled_models.items():
+        model_iterator = tqdm(
+            model_items,
+            desc="Models",
+            leave=False,
+            disable=not self.show_progress
+        )
+
+        for model_key, model_config in model_iterator:
             result = self.benchmark_model(model_key, model_config, validation_papers)
             benchmark_results[model_key] = result
 
-            # Pause between models
             time.sleep(2)
 
-        # Save summary
         summary = {
             "timestamp": datetime.now().isoformat(),
             "num_models_tested": len(benchmark_results),
@@ -329,7 +419,6 @@ class ModelBenchmarkV2:
 
         logger.info(f"Summary saved to {summary_file}")
 
-        # Create comparison table
         self._create_comparison_table(benchmark_results)
 
         return summary

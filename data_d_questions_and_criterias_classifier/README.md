@@ -1,241 +1,81 @@
 # Questions and Criterias Classifier Microservice
 
-Микросервис для классификации научных статей о теориях старения по 9 исследовательским вопросам и 4 критериям конструктивной теории старения.
+## Purpose
+- Automates annotation of scientific papers against nine aging-related questions (Q1–Q9) and four evaluation criteria (C1–C4).
+- Supports multiple inference approaches: NLI, sentence embeddings, cross-encoders, and autoregressive LLMs.
+- Integrates with Qdrant for validation data and logging infrastructure under `data/logs`.
 
-## Описание
+## Validation Scope
+### Questions (Q1–Q9)
+- Q1: Detects whether a paper proposes an aging biomarker.
+- Q2: Captures statements about molecular mechanisms of aging.
+- Q3: Identifies suggested longevity interventions.
+- Q4: Flags claims that aging cannot be reversed.
+- Q5: Looks for biomarkers explaining maximal lifespan gaps between species.
+- Q6: Explains naked mole rat longevity.
+- Q7: Explains avian longevity versus mammals.
+- Q8: Explains why larger animals live longer.
+- Q9: Explains calorie restriction longevity effects.
 
-Этот микросервис:
-- Классифицирует статьи, прошедшие фильтр теорий старения (is_aging_theory=True)
-- Использует модель **Bioformer-8L** для автоматической классификации
-- Поддерживает ручную разметку с выделением фрагментов текста
-- Работает через WebSocket для real-time обновлений
-- Сохраняет результаты в Qdrant векторную БД
+### Criteria (C1–C4)
+- C1: Biomarkers explaining lifespan across species.
+- C2: Biomarkers for mortality inside species.
+- C3: Predicts testable longevity interventions.
+- C4: Focuses on mechanistic (molecular) explanations.
 
-## 9 Исследовательских Вопросов
+## Configuration
+- Main settings live in `config.yaml`, rewritten in UTF-8 without BOM.
+- `classifier` section controls base model, GPU usage, quantization, and tqdm progress visibility.
+- `huggingface` section specifies the environment variable used for authentication (`HF_TOKEN`) and models that demand it.
+- Model definitions and benchmark parameters are stored in `models_config_v2.yaml`.
 
-1. **Q1**: Предлагается ли биомаркер старения? (3 варианта: Yes quantitatively shown / Yes but not shown / No)
-2. **Q2**: Предлагается ли молекулярный механизм старения? (Yes/No)
-3. **Q3**: Предлагается ли интервенция для тестирования долголетия? (Yes/No)
-4. **Q4**: Утверждается ли, что старение необратимо? (Yes/No)
-5. **Q5**: Предлагается ли биомаркер, предсказывающий различия максимальной продолжительности жизни между видами? (Yes/No)
-6. **Q6**: Объясняется ли, почему голый землекоп живёт 40+ лет при малом размере? (Yes/No)
-7. **Q7**: Объясняется ли, почему птицы в среднем живут дольше млекопитающих? (Yes/No)
-8. **Q8**: Объясняется ли, почему крупные животные живут дольше мелких? (Yes/No)
-9. **Q9**: Объясняется ли, почему ограничение калорий увеличивает продолжительность жизни позвоночных? (Yes/No)
+## Environment Management
+- All runtime variables are loaded from `.env` in the repository root using `python-dotenv` and the PowerShell launcher.
+- Example `.env`:
+  ```
+  HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxx
+  QDRANT_URL=http://localhost:6333
+  ```
+- `run.ps1` automatically reads `.env` and exposes values to all microservices; direct Poetry runs inherit the same settings via the Python autoload hook.
 
-## 4 Критерия Конструктивной Теории
+## Hugging Face Token (mandatory for gated LLMs)
+1. Create a personal access token with at least `read` scope: https://huggingface.co/settings/tokens.
+2. Add `HF_TOKEN` to `.env` and (optionally) export it in the current PowerShell session:
+   - Session only: `$Env:HF_TOKEN = 'hf_xxxxxxxxxxxxxxxxxxxxx'`
+   - Persistent fallback: `setx HF_TOKEN "hf_xxxxxxxxxxxxxxxxxxxxx"`
+3. Validate the token via Poetry: `poetry run huggingface-cli whoami`.
+4. `run.ps1` aborts if `HF_TOKEN` is missing to protect gated models such as `google/medgemma-4b-it` and `meta-llama/Llama-3.2-3B-Instruct`.
 
-1. **C1**: Предлагает биомаркеры, объясняющие максимальную продолжительность жизни различных видов (Yes/No)
-2. **C2**: Предлагает биомаркеры, объясняющие смертность внутри вида (Yes/No)
-3. **C3**: Предсказывает проверяемое воздействие на продолжительность жизни (Yes/No)
-4. **C4**: Является механистической (молекулярные пути), а не феноменологической (Yes/No)
+## Dependencies
+- Python dependencies are managed by Poetry (`pyproject.toml` / `poetry.lock`).
+- New runtime packages: `transformers >= 4.45`, `accelerate`, `huggingface-hub`, `safetensors`, `bitsandbytes`.
+- GPU: NVIDIA GTX 1070 (8 GB) requires CUDA drivers compatible with PyTorch 2.1+ and bitsandbytes 0.45.
+- Client dashboard now uses Bun instead of npm.
 
-## Архитектура
+## Launching Services
+1. Run PowerShell as Administrator.
+2. Ensure `HF_TOKEN` is set and `bun` is available (`Get-Command bun`).
+3. Execute `.\run.ps1`. The script:
+   - Stops previous processes and frees required ports.
+   - Verifies `HF_TOKEN`.
+   - Boots all microservices via Poetry (`poetry run python main.py`).
+   - Starts the client with `bun run dev`.
+4. Access points (default ports):
+   - Questions API: `http://127.0.0.1:8005`
+   - Client UI: `http://localhost:5173`
+   - Qdrant REST: `http://localhost:6333`
 
-```
-data_d_questions_and_criterias_classifier/
-├── main.py                      # FastAPI сервер с WebSocket
-├── questions_classifier.py      # Классификатор на Bioformer-8L
-├── qdrant_storage.py           # Работа с Qdrant БД
-├── config.yaml                 # Конфигурация
-├── pyproject.toml             # Зависимости Poetry
-└── README.md                  # Документация
-```
+## Testing
+- Unit tests reside under `tests/` (added for LLM authentication and generation).
+- Run the full suite inside the Poetry environment:
+  ```
+  poetry run pytest
+  ```
+- Benchmark smoke test: `poetry run python model_benchmark_v2.py` (requires populated Qdrant and valid HF token).
 
-## Установка и Запуск
+## Useful Commands
+- Inspect validation papers in Qdrant: `curl http://localhost:6333/collections`.
+- Manual classifier run on a sample: `poetry run python questions_classifier_v2.py`.
+- Clear Poetry virtual environment cache if needed: `poetry env remove --all`.
 
-### Через run.ps1 (рекомендуется)
-
-```powershell
-.\run.ps1
-```
-
-Микросервис запустится автоматически на порту **8005**.
-
-### Ручной запуск
-
-```bash
-cd data_d_questions_and_criterias_classifier
-poetry install
-poetry run python main.py
-```
-
-## API Endpoints
-
-### REST API
-
-- `GET /` - Статус сервиса
-- `GET /api/status` - Текущее состояние классификации
-- `POST /api/start` - Запустить автоклассификацию
-- `POST /api/stop` - Остановить классификацию
-- `GET /api/paper/{pmc_id}` - Получить статью с результатами
-- `POST /api/paper/{pmc_id}/annotate` - Добавить ручную аннотацию
-- `POST /api/paper/{pmc_id}/delete_annotation` - Удалить аннотацию
-
-### WebSocket
-
-- `WS /ws` - Real-time обновления логов и прогресса
-
-## Структура Данных
-
-### Результаты Классификации в Qdrant
-
-```python
-{
-  "questions_classification": {
-    "Q1": {
-      "question_id": "Q1",
-      "answer": "Yes, quantitatively shown",
-      "confidence": 0.85,
-      "fragments": [
-        {
-          "text": "...",
-          "start_position": 1234,
-          "end_position": 1456,
-          "confidence": 0.87
-        }
-      ]
-    },
-    "Q2": {
-      "question_id": "Q2",
-      "answer": true,
-      "confidence": 0.92,
-      "fragments": [...]
-    },
-    # ... Q3-Q9
-  },
-  "criteria_classification": {
-    "C1": {
-      "question_id": "C1",
-      "answer": true,
-      "confidence": 0.78,
-      "fragments": [...]
-    },
-    # ... C2-C4
-  },
-  "manual_annotations": [
-    {
-      "type": "Q1",
-      "answer": "Yes, quantitatively shown",
-      "fragment": {
-        "text": "...",
-        "start_position": 1234,
-        "end_position": 1456
-      },
-      "timestamp": "2025-01-15T12:34:56"
-    }
-  ]
-}
-```
-
-## UI Функционал
-
-### Режим Автоклассификации
-
-- Отображение прогресса классификации
-- Просмотр текущей обрабатываемой статьи
-- Результаты классификации по всем 13 классам
-- Статистика: классифицировано статей, ошибки
-
-### Режим Ручной Разметки
-
-1. **Выделение текста**: Выделите фрагмент мышью
-2. **Выбор класса**: Появится меню с выбором Q1-Q9, C1-C4
-3. **Сохранение**: Аннотация сохраняется в БД
-4. **Просмотр**: Все аннотации отображаются с цветовой кодировкой
-5. **Удаление**: Возможность удалить неправильную аннотацию
-
-### Цветовая Кодировка
-
-- Q1: #ef4444 (красный)
-- Q2: #f97316 (оранжевый)
-- Q3: #f59e0b (янтарный)
-- Q4: #eab308 (жёлтый)
-- Q5: #84cc16 (лайм)
-- Q6: #22c55e (зелёный)
-- Q7: #10b981 (изумрудный)
-- Q8: #14b8a6 (бирюзовый)
-- Q9: #06b6d4 (голубой)
-- C1: #0ea5e9 (небесно-голубой)
-- C2: #3b82f6 (синий)
-- C3: #6366f1 (индиго)
-- C4: #8b5cf6 (фиолетовый)
-
-## Конфигурация
-
-Настройки в `config.yaml`:
-
-```yaml
-classifier:
-  model_name: "bioformers/bioformer-8L"
-  use_gpu: true
-  quantize: false
-  confidence_threshold: 0.5
-  batch_size: 32
-  max_length: 512
-
-api:
-  host: "127.0.0.1"
-  port: 8005
-```
-
-## Зависимости от Других Микросервисов
-
-Требуются запущенные сервисы:
-- **Microservice A**: Сбор URLs статей
-- **Microservice B**: Загрузка полных текстов
-- **Microservice C**: Фильтр теорий старения (is_aging_theory=True)
-- **Qdrant**: Векторная база данных
-
-## Логи
-
-Логи сохраняются в:
-```
-data/logs/questions_classifier_YYYYMMDD_HHMMSS.log
-```
-
-## Производительность
-
-- **GPU режим**: ~5-10 статей/мин (13 классов × статья)
-- **CPU режим**: ~1-2 статьи/мин
-- **Память**: ~4-6 GB (с моделью Bioformer-8L)
-
-## Troubleshooting
-
-### Модель не загружается
-
-```bash
-poetry run python -c "from transformers import AutoModel; AutoModel.from_pretrained('bioformers/bioformer-8L')"
-```
-
-### Ошибка подключения к Qdrant
-
-Убедитесь, что Qdrant запущен:
-```bash
-curl http://localhost:6333/collections
-```
-
-### WebSocket не подключается
-
-Проверьте, что порт 8005 не занят:
-```bash
-netstat -ano | findstr 8005
-```
-
-## Разработка
-
-### Тестирование классификатора
-
-```bash
-poetry run python questions_classifier.py
-```
-
-### Проверка API
-
-```bash
-curl http://127.0.0.1:8005/api/status
-```
-
-## Лицензия
-
-MIT License
+Keep all scripts and configuration files in UTF-8 (no BOM) and avoid executing Python outside the Poetry context to maintain dependency reproducibility.

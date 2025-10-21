@@ -5,8 +5,9 @@
   "description": "SPECTER - Scientific paper embeddings",
   "params": "110M",
   "training_data": "Scientific papers from Semantic Scholar",
-  "timestamp": "2025-10-21T10:06:01.065769",
+  "timestamp": "2025-10-21T14:46:48.476564",
   "error": null,
+  "requires_auth": false,
   "init_time_sec": 0.01,
   "model_info": {
     "model_name": "allenai/specter",
@@ -16,8 +17,8 @@
     "num_questions": 9,
     "num_criteria": 4
   },
-  "total_classification_time_sec": 31.46,
-  "avg_time_per_paper_sec": 6.29,
+  "total_classification_time_sec": 29.46,
+  "avg_time_per_paper_sec": 5.89,
   "metrics": {
     "overall": {
       "accuracy_micro": 0.4444,

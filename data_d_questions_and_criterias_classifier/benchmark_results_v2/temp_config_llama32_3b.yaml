@@ -8,7 +8,9 @@ classifier:
   confidence_threshold: 0.5
   max_length: 512
   model_name: meta-llama/Llama-3.2-3B-Instruct
-  quantize: false
+  quantize: true
+  random_seed: 1337
+  show_progress: true
   sliding_window_size: 512
   sliding_window_stride: 256
   use_gpu: true
@@ -25,6 +27,12 @@ criteria:
   C4:
     text: Is mechanistic (molecular pathways) rather than phenomenological
     type: binary
+huggingface:
+  fail_if_missing: false
+  require_token_for_models:
+  - google/medgemma-4b-it
+  - meta-llama/llama-3.2-3b-instruct
+  token_env_var: HF_TOKEN
 logging:
   level: INFO
   log_file: data/logs/questions_classifier.log

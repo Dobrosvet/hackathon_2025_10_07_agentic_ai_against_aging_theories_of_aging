@@ -1,26 +1,17 @@
-# Конфигурация Questions and Criterias Classifier Service
+# Questions and Criterias Classifier Service configuration
 
-# Режим классификации
 classifier:
-  # Модель для классификации
   model_name: "bioformers/bioformer-8L"
+  use_gpu: true
+  quantize: false
+  random_seed: 1337
+  show_progress: true
+  confidence_threshold: 0.5
+  batch_size: 32
+  max_length: 512
+  sliding_window_size: 512
+  sliding_window_stride: 256
 
-  # GPU настройки
-  use_gpu: true  # Использовать GPU если доступен
-  quantize: false  # Использовать int8 quantization для ускорения
-
-  # Параметры классификации
-  confidence_threshold: 0.5  # Минимальная уверенность для классификации
-
-  # Batch processing
-  batch_size: 32  # Размер батча для GPU обработки
-  max_length: 512  # Максимальная длина токенов
-
-  # Sliding window для длинных текстов
-  sliding_window_size: 512  # Размер окна (токены)
-  sliding_window_stride: 256  # Шаг окна (токены)
-
-# Вопросы и критерии для классификации
 questions:
   Q1:
     text: "Does it suggest an aging biomarker (measurable entity reflecting aging pace or health state, associated with mortality or age-related conditions)?"
@@ -65,22 +56,26 @@ criteria:
     text: "Is mechanistic (molecular pathways) rather than phenomenological"
     type: "binary"
 
-# Qdrant настройки
 qdrant:
   host: "localhost"
   port: 6333
   collection_name: "pubmed_papers"
-  batch_size: 10  # Размер батча для сохранения в Qdrant
+  batch_size: 10
 
-# Logging
 logging:
-  level: "INFO"  # DEBUG | INFO | WARNING | ERROR
+  level: "INFO"
   save_to_file: true
   log_file: "data/logs/questions_classifier.log"
 
-# API настройки
 api:
   host: "127.0.0.1"
   port: 8005
-  reload: false  # Auto-reload при изменении кода
-  workers: 1  # Количество uvicorn worker'ов
+  reload: false
+  workers: 1
+
+huggingface:
+  token_env_var: "HF_TOKEN"
+  fail_if_missing: false
+  require_token_for_models:
+    - "google/medgemma-4b-it"
+    - "meta-llama/llama-3.2-3b-instruct"
