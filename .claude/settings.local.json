@@ -47,7 +47,12 @@
       "Bash(\"..\\.venv\\Scripts\\python.exe\" upload_validation_data.py)",
       "Bash(../.venv/Scripts/python.exe upload_validation_data.py)",
       "Bash(d:/Cloud/Projects/hackathon_aaaa_251016/.venv/Scripts/python.exe d:/Cloud/Projects/hackathon_aaaa_251016/personal_folder/upload_validation_data.py)",
-      "Bash(cmd /c \"d:\\Cloud\\Projects\\hackathon_aaaa_251016\\.venv\\Scripts\\python.exe d:\\Cloud\\Projects\\hackathon_aaaa_251016\\personal_folder\\upload_validation_data.py\")"
+      "Bash(cmd /c \"d:\\Cloud\\Projects\\hackathon_aaaa_251016\\.venv\\Scripts\\python.exe d:\\Cloud\\Projects\\hackathon_aaaa_251016\\personal_folder\\upload_validation_data.py\")",
+      "Bash(\"..\\.venv\\Scripts\\python.exe\" model_benchmark.py)",
+      "Bash(\"..\\.venv\\Scripts\\python.exe\" -c \"import sentence_transformers; print(sentence_transformers.__version__); print(sentence_transformers.__file__)\")",
+      "Bash(\".\\.venv\\Scripts\\python.exe\" -c \"import sentence_transformers; print(sentence_transformers.__version__); print(sentence_transformers.__file__)\")",
+      "Bash(\".venv/Scripts/python.exe\" -c \"import sentence_transformers; print(sentence_transformers.__version__); print(sentence_transformers.__file__)\")",
+      "Bash(../.venv/Scripts/python.exe model_benchmark.py)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,71 @@
+api:
+  host: 127.0.0.1
+  port: 8005
+  reload: false
+  workers: 1
+classifier:
+  batch_size: 32
+  confidence_threshold: 0.5
+  max_length: 512
+  model_name: meta-llama/Llama-3.2-3B-Instruct
+  quantize: false
+  sliding_window_size: 512
+  sliding_window_stride: 256
+  use_gpu: true
+criteria:
+  C1:
+    text: Proposes biomarkers explaining maximal lifespan across species
+    type: binary
+  C2:
+    text: Proposes biomarkers explaining mortality within species
+    type: binary
+  C3:
+    text: Predicts testable longevity interventions
+    type: binary
+  C4:
+    text: Is mechanistic (molecular pathways) rather than phenomenological
+    type: binary
+logging:
+  level: INFO
+  log_file: data/logs/questions_classifier.log
+  save_to_file: true
+qdrant:
+  batch_size: 10
+  collection_name: pubmed_papers
+  host: localhost
+  port: 6333
+questions:
+  Q1:
+    options:
+    - Yes, quantitatively shown
+    - Yes, but not shown
+    - 'No'
+    text: Does it suggest an aging biomarker (measurable entity reflecting aging pace
+      or health state, associated with mortality or age-related conditions)?
+    type: multiclass
+  Q2:
+    text: Does it suggest a molecular mechanism of aging?
+    type: binary
+  Q3:
+    text: Does it suggest a longevity intervention to test?
+    type: binary
+  Q4:
+    text: Does it claim that aging cannot be reversed?
+    type: binary
+  Q5:
+    text: Does it suggest a biomarker that predicts maximal lifespan differences between
+      species?
+    type: binary
+  Q6:
+    text: Does it explain why the naked mole rat can live 40+ years despite its small
+      size?
+    type: binary
+  Q7:
+    text: Does it explain why birds live much longer than mammals on average?
+    type: binary
+  Q8:
+    text: Does it explain why large animals live longer than small ones?
+    type: binary
+  Q9:
+    text: Does it explain why calorie restriction increases the lifespan of vertebrates?
+    type: binary

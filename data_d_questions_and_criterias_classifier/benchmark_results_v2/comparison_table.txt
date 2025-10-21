@@ -1,0 +1,17 @@
+BENCHMARK COMPARISON TABLE V2
+========================================================================================================================
+
+Model                     Approach        F1 (W)     F1 (Ma)    Acc (W)    Improve      Time/paper   Status         
+------------------------------------------------------------------------------------------------------------------------
+biomed_nli                nli             0.5547     0.5547     0.4667     -5.84%       7.90         BEST           
+pubmedbert_sbert          sentence_bert   0.5547     0.5547     0.4667     -5.84%       4.05         OK             
+mpnet_sbert               sentence_bert   0.5547     0.5547     0.5111     -5.84%       5.34         OK             
+bioformer_baseline        embedding       0.5285     0.5285     0.4889     -10.29%      1.75         OK             
+bart_nli                  nli             0.4973     0.4973     0.4667     -15.58%      37.51        OK             
+minilm_sbert              sentence_bert   0.3654     0.3654     0.5111     -37.97%      0.77         OK             
+biolinkbert_sbert         sentence_bert   0.3214     0.3214     0.4889     -45.44%      5.57         OK             
+specter_sbert             sentence_bert   0.1079     0.1079     0.4444     -81.68%      6.29         OK             
+medgemma_4b               -               ERROR      -          -          -            -            Failed         
+llama32_3b                -               ERROR      -          -          -            -            Failed         
+ministral_3b              -               ERROR      -          -          -            -            Failed         
+------------------------------------------------------------------------------------------------------------------------

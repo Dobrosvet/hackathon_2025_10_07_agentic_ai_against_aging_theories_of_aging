@@ -70,7 +70,7 @@ service_state = {
     "db_count": 0,
     "logs": [],
     "start_time": None,
-    "search_query": "(aging) AND (theory OR paradigm) OR Aging[MeSh] AND (ffrft[Filter])",
+    "search_query": "(aging) AND (theory OR paradigm) OR Aging[MeSh] AND open_access[Filter]",
     "message": ""
 }
 

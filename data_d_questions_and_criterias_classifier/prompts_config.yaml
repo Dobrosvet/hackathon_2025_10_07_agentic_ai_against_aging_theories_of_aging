@@ -1,0 +1,44 @@
+# Prompt templates for LLM-based classification
+
+system_prompt: "You are a scientific paper analyzer specialized in aging research."
+
+# Binary question prompt template
+binary_question:
+  template: |
+    {system_prompt}
+
+    Context: {paper_text}
+
+    Question: {question_text}
+
+    Answer with ONLY "Yes" or "No":
+
+  max_context_tokens: 2000
+  max_new_tokens: 5
+  temperature: 0.0
+
+# Multiclass question prompt template
+multiclass_question:
+  template: |
+    {system_prompt}
+
+    Context: {paper_text}
+
+    Question: {question_text}
+    Options: {options}
+
+    Answer with ONLY one of the options:
+
+  max_context_tokens: 2000
+  max_new_tokens: 10
+  temperature: 0.0
+
+# Few-shot examples (optional, for future use)
+few_shot_examples:
+  - context: "This paper investigates telomere shortening as a mechanism of cellular senescence..."
+    question: "Does it discuss the hallmarks of aging?"
+    answer: "Yes"
+
+  - context: "We developed a novel method for analyzing protein structures using deep learning..."
+    question: "Does it discuss the hallmarks of aging?"
+    answer: "No"

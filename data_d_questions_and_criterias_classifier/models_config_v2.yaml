@@ -1,0 +1,351 @@
+# Enhanced Model Configuration v2
+# Includes NLI and Sentence-BERT models for improved classification
+
+models:
+  # ==================== BASELINE ====================
+  bioformer_baseline:
+    name: "bioformers/bioformer-8L"
+    approach: "embedding"  # cosine similarity of embeddings
+    description: "Current baseline model (embedding approach)"
+    params: "108M"
+    expected_vram_gb: 2.0
+    enabled: true
+
+  # ==================== NLI MODELS (Zero-Shot Classification) ====================
+
+  # TOP PRIORITY: DeBERTa v3 - SOTA on NLI tasks
+  deberta_nli:
+    name: "microsoft/deberta-v3-base"
+    approach: "nli"  # Natural Language Inference
+    description: "DeBERTa v3 Base - SOTA on MNLI, ANLI benchmarks"
+    params: "184M"
+    expected_vram_gb: 2.5
+    training_data: "MNLI, ANLI, SNLI"
+    best_for: "Zero-shot text classification, entailment"
+    paper: "https://arxiv.org/abs/2111.09543"
+    enabled: false  # Disabled: tokenizer incompatibility with zero-shot pipeline
+    nli_config:
+      hypothesis_template: "This paper {}"
+      entailment_threshold: 0.5
+
+  # BART-Large MNLI - Popular and robust
+  bart_nli:
+    name: "facebook/bart-large-mnli"
+    approach: "nli"
+    description: "BART-Large fine-tuned on MNLI"
+    params: "406M"
+    expected_vram_gb: 3.5
+    training_data: "MNLI (Multi-Genre NLI)"
+    best_for: "Zero-shot classification, robust across domains"
+    paper: "https://arxiv.org/abs/1910.13461"
+    enabled: true
+    nli_config:
+      hypothesis_template: "This paper {}"
+      entailment_threshold: 0.5
+
+  # Biomedical NLI model - Specialized
+  biomed_nli:
+    name: "allenai/scibert_scivocab_uncased"
+    approach: "nli"  # Use standard NLI approach
+    description: "SciBERT adapted for NLI on scientific text"
+    params: "110M"
+    expected_vram_gb: 2.0
+    training_data: "Semantic Scholar papers"
+    best_for: "Scientific text NLI"
+    enabled: true
+    nli_config:
+      hypothesis_template: "This paper {}"
+      entailment_threshold: 0.5
+
+  # Compact NLI model for speed
+  minilm_nli:
+    name: "cross-encoder/nli-MiniLM2-L6-H768"
+    approach: "cross_encoder"
+    description: "MiniLM cross-encoder for NLI (fast and accurate)"
+    params: "23M"
+    expected_vram_gb: 1.0
+    training_data: "SNLI, MNLI"
+    best_for: "Fast NLI inference"
+    enabled: false  # Disabled: requires special NLI cross-encoder handling
+
+  # ==================== SENTENCE-BERT MODELS (Proper Embeddings) ====================
+
+  # TOP: Biomedical Sentence-BERT
+  pubmedbert_sbert:
+    name: "pritamdeka/S-PubMedBert-MS-MARCO"
+    approach: "sentence_bert"
+    description: "Sentence-BERT for biomedical text (PubMed)"
+    params: "110M"
+    expected_vram_gb: 2.0
+    training_data: "PubMed + MS MARCO"
+    best_for: "Biomedical semantic similarity"
+    enabled: true
+    sbert_config:
+      normalize_embeddings: true
+      pooling: "mean"
+
+  # General-purpose SBERT (very good baseline)
+  mpnet_sbert:
+    name: "sentence-transformers/all-mpnet-base-v2"
+    approach: "sentence_bert"
+    description: "Best general-purpose sentence embedding model"
+    params: "110M"
+    expected_vram_gb: 2.0
+    training_data: "1B+ sentence pairs"
+    best_for: "General semantic similarity (SOTA on STS)"
+    paper: "https://arxiv.org/abs/1908.10084"
+    enabled: true
+    sbert_config:
+      normalize_embeddings: true
+      pooling: "mean"
+
+  # Fast and compact SBERT
+  minilm_sbert:
+    name: "sentence-transformers/all-MiniLM-L6-v2"
+    approach: "sentence_bert"
+    description: "Fast and efficient sentence embeddings"
+    params: "23M"
+    expected_vram_gb: 1.0
+    training_data: "1B+ sentence pairs"
+    best_for: "Fast semantic similarity"
+    enabled: true
+    sbert_config:
+      normalize_embeddings: true
+      pooling: "mean"
+
+  # Scientific SBERT
+  specter_sbert:
+    name: "allenai/specter"
+    approach: "sentence_bert"
+    description: "SPECTER - Scientific paper embeddings"
+    params: "110M"
+    expected_vram_gb: 2.0
+    training_data: "Scientific papers from Semantic Scholar"
+    best_for: "Scientific document embeddings"
+    paper: "https://arxiv.org/abs/2004.07180"
+    enabled: true
+    sbert_config:
+      normalize_embeddings: true
+      pooling: "cls"
+
+  # ==================== HYBRID MODELS ====================
+
+  # BioLinkBERT with proper sentence embeddings
+  biolinkbert_sbert:
+    name: "michiyasunaga/BioLinkBERT-base"
+    approach: "sentence_bert"
+    description: "BioLinkBERT - Biomedical language model with document-level pre-training"
+    params: "110M"
+    expected_vram_gb: 2.0
+    training_data: "PubMed + link prediction"
+    best_for: "Biomedical text understanding"
+    paper: "https://arxiv.org/abs/2203.15827"
+    enabled: true
+    sbert_config:
+      normalize_embeddings: true
+      pooling: "mean"
+
+  # ==================== LLM GENERATION MODELS (3-4B Autoregressive) ====================
+
+  # TOP PRIORITY: Google MedGemma 4B (Medical specialist, May 2025)
+  medgemma_4b:
+    name: "google/medgemma-4b-it"
+    approach: "llm_generation"
+    description: "MedGemma 4B - Gemma 3 specialized for medical text and image analysis"
+    params: "4B"
+    expected_vram_gb: 6.0
+    training_data: "Medical texts + de-identified medical images (X-rays, dermatology, histopathology)"
+    best_for: "Medical question answering, clinical summarization"
+    paper: "https://arxiv.org/abs/2507.05201"
+    enabled: true
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      quantization: true
+
+  # Stanford BioMedLM (PubMed specialist, March 2024)
+  biomedlm:
+    name: "stanford-crfm/BioMedLM"
+    approach: "llm_generation"
+    description: "BioMedLM 2.7B - GPT-style model trained exclusively on PubMed"
+    params: "2.7B"
+    expected_vram_gb: 4.0
+    training_data: "PubMed only (34.6B tokens)"
+    best_for: "Biomedical text understanding, medical QA"
+    paper: "https://arxiv.org/abs/2403.18421"
+    enabled: false
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      quantization: true
+
+  # Microsoft Phi-4 Mini Reasoning (May 2025)
+  phi4_mini_reasoning:
+    name: "microsoft/Phi-4-mini-reasoning"
+    approach: "llm_generation"
+    description: "Phi-4 Mini 3.8B - Reasoning-focused model for fact-checking"
+    params: "3.8B"
+    expected_vram_gb: 5.0
+    training_data: "Reasoning-focused synthetic data"
+    best_for: "Complex reasoning, fact-checking, educational applications"
+    paper: "https://www.microsoft.com/en-us/research/publication/phi-4-technical-report/"
+    enabled: false
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      quantization: true
+
+  # Alibaba Qwen3 4B (April 2025)
+  qwen3_4b:
+    name: "Qwen/Qwen3-4B-Instruct-2507"
+    approach: "llm_generation"
+    description: "Qwen3 4B - Latest generation with improved reasoning"
+    params: "4B"
+    expected_vram_gb: 5.0
+    training_data: "Multilingual data with reasoning enhancement"
+    best_for: "General instruction following, multilingual tasks"
+    paper: "https://qwenlm.github.io/blog/qwen3/"
+    enabled: false
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      quantization: true
+
+  # Meta Llama 3.2 3B (October 2024 quantized)
+  llama32_3b:
+    name: "meta-llama/Llama-3.2-3B-Instruct"
+    approach: "llm_generation"
+    description: "Llama 3.2 3B - Quantized edge-optimized model"
+    params: "3B"
+    expected_vram_gb: 4.0
+    training_data: "General + instructions"
+    best_for: "Edge/mobile devices, efficient inference"
+    enabled: true
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      quantization: true
+
+  # Mistral Ministral 3B (October 2024)
+  ministral_3b:
+    name: "mistralai/Ministral-3B-2410"
+    approach: "llm_generation"
+    description: "Ministral 3B - Edge-computing optimized, 128K context"
+    params: "3B"
+    expected_vram_gb: 4.0
+    training_data: "General data, edge-optimized"
+    best_for: "Fast inference, edge computing"
+    enabled: true
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      quantization: true
+
+# Benchmark settings
+benchmark:
+  use_validation_papers: true
+  num_papers: 5
+
+  # Performance metrics
+  measure_time: true
+  measure_vram: true
+  measure_cpu: true
+
+  # Model loading
+  use_gpu: true
+  try_quantization_if_oom: true
+  fallback_to_cpu: true
+
+  # Results
+  save_detailed_results: true
+  save_confusion_matrices: true
+  save_paper_comparisons: true
+  results_dir: "benchmark_results_v2"
+
+  # Display
+  show_progress: true
+  verbose: true
+
+# Approach-specific settings
+approaches:
+  # NLI approach settings
+  nli:
+    default_template: "This paper {}"
+    candidate_labels_binary:
+      yes: "suggests this concept"
+      no: "does not suggest this concept"
+    entailment_threshold: 0.5
+    multi_label: false
+
+  # Sentence-BERT approach
+  sentence_bert:
+    normalize_embeddings: true
+    similarity_threshold: 0.5
+    pooling: "mean"
+    # Create embeddings for questions with context
+    question_template: "A scientific paper about aging that {question_text}"
+
+  # Cross-encoder approach
+  cross_encoder:
+    score_threshold: 0.5
+
+  # LLM Generation approach
+  llm_generation:
+    system_prompt: "You are a scientific paper analyzer specialized in aging research."
+    max_context_length: 2000
+    max_new_tokens: 5
+    temperature: 0.0
+    do_sample: false
+    use_8bit_quantization: true
+    prompt_template_binary: |
+      You are a scientific paper analyzer specialized in aging research.
+
+      Context: {paper_text}
+
+      Question: {question_text}
+
+      Answer with ONLY "Yes" or "No":
+    prompt_template_multiclass: |
+      You are a scientific paper analyzer specialized in aging research.
+
+      Context: {paper_text}
+
+      Question: {question_text}
+      Options: {options}
+
+      Answer with ONLY one of the options:
+
+# Metrics
+metrics:
+  overall:
+    - "f1_weighted"  # Main metric
+    - "f1_macro"
+    - "f1_micro"
+    - "accuracy_weighted"
+    - "accuracy_macro"
+
+  per_question:
+    - "accuracy"
+    - "precision"
+    - "recall"
+    - "f1_score"
+    - "confusion_matrix"
+
+  performance:
+    - "total_time_sec"
+    - "avg_time_per_paper_sec"
+    - "avg_time_per_question_sec"
+    - "peak_vram_gb"
+
+# Targets
+targets:
+  current_f1_weighted: 0.5891
+  target_f1_weighted: 0.90
+  required_improvement: 0.3109
+  required_improvement_percent: 52.7
