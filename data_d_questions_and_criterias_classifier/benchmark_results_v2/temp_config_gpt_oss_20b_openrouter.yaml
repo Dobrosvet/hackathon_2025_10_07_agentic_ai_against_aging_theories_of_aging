@@ -1,0 +1,120 @@
+api:
+  host: 127.0.0.1
+  port: 8005
+  reload: false
+  workers: 1
+classifier:
+  api:
+    backoff_base: 3.0
+    backoff_cap: 240.0
+    backoff_jitter: 0.5
+    max_retries: 8
+    throttle_seconds: 12.0
+  batch_size: 32
+  confidence_threshold: 0.5
+  generation_config:
+    do_sample: false
+    max_context_length: 2000
+    max_new_tokens: 5
+    temperature: 0.0
+  max_length: 512
+  model_name: openai/gpt-oss-20b:free
+  provider: openrouter
+  quantize: false
+  random_seed: 1337
+  show_progress: true
+  sliding_window_size: 512
+  sliding_window_stride: 256
+  use_gpu: true
+criteria:
+  C1:
+    text: Proposes biomarkers explaining maximal lifespan across species
+    type: binary
+  C2:
+    text: Proposes biomarkers explaining mortality within species
+    type: binary
+  C3:
+    text: Predicts testable longevity interventions
+    type: binary
+  C4:
+    text: Is mechanistic (molecular pathways) rather than phenomenological
+    type: binary
+google_genai:
+  backoff_base: 2.0
+  backoff_cap: 180
+  backoff_jitter: 0.5
+  http_options: {}
+  max_retries: 6
+  rate_limit_per_minute: 60
+  retry_statuses:
+  - 429
+  - 500
+  - 502
+  - 503
+  - 504
+  throttle_seconds: 1.0
+  timeout: 120
+  token_env_var: GOOGLE_GENAI_API_KEY
+huggingface:
+  fail_if_missing: false
+  require_token_for_models:
+  - google/medgemma-4b-it
+  - meta-llama/llama-3.2-3b-instruct
+  token_env_var: HF_TOKEN
+logging:
+  level: INFO
+  log_file: data/logs/questions_classifier.log
+  save_to_file: true
+openrouter:
+  backoff_base: 2.0
+  backoff_cap: 240
+  backoff_jitter: 0.5
+  base_url: https://openrouter.ai/api/v1
+  default_headers:
+    HTTP-Referer: https://local.questions-benchmark
+    X-Title: Questions Classifier Benchmark
+  endpoint: /chat/completions
+  max_retries: 6
+  throttle_seconds: 12.0
+  timeout: 120
+  token_env_var: OPENROUTER_API_KEY
+qdrant:
+  batch_size: 10
+  collection_name: pubmed_papers
+  host: localhost
+  port: 6333
+questions:
+  Q1:
+    options:
+    - Yes, quantitatively shown
+    - Yes, but not shown
+    - 'No'
+    text: Does it suggest an aging biomarker (measurable entity reflecting aging pace
+      or health state, associated with mortality or age-related conditions)?
+    type: multiclass
+  Q2:
+    text: Does it suggest a molecular mechanism of aging?
+    type: binary
+  Q3:
+    text: Does it suggest a longevity intervention to test?
+    type: binary
+  Q4:
+    text: Does it claim that aging cannot be reversed?
+    type: binary
+  Q5:
+    text: Does it suggest a biomarker that predicts maximal lifespan differences between
+      species?
+    type: binary
+  Q6:
+    text: Does it explain why the naked mole rat can live 40+ years despite its small
+      size?
+    type: binary
+  Q7:
+    text: Does it explain why birds live much longer than mammals on average?
+    type: binary
+  Q8:
+    text: Does it explain why large animals live longer than small ones?
+    type: binary
+  Q9:
+    text: Does it explain why calorie restriction increases the lifespan of vertebrates?
+    type: binary

@@ -4,11 +4,25 @@ api:
   reload: false
   workers: 1
 classifier:
+  api:
+    backoff_base: 3.0
+    backoff_cap: 240.0
+    backoff_jitter: 0.5
+    max_retries: 8
+    throttle_seconds: 12.0
   batch_size: 32
   confidence_threshold: 0.5
+  generation_config:
+    do_sample: false
+    max_context_length: 2000
+    max_new_tokens: 5
+    temperature: 0.0
   max_length: 512
-  model_name: microsoft/BioGPT-Large
+  model_name: google/gemini-2.0-flash-exp:free
+  provider: openrouter
   quantize: false
+  random_seed: 1337
+  show_progress: true
   sliding_window_size: 512
   sliding_window_stride: 256
   use_gpu: true
@@ -25,10 +39,45 @@ criteria:
   C4:
     text: Is mechanistic (molecular pathways) rather than phenomenological
     type: binary
+google_genai:
+  backoff_base: 2.0
+  backoff_cap: 180
+  backoff_jitter: 0.5
+  http_options: {}
+  max_retries: 6
+  rate_limit_per_minute: 60
+  retry_statuses:
+  - 429
+  - 500
+  - 502
+  - 503
+  - 504
+  throttle_seconds: 1.0
+  timeout: 120
+  token_env_var: GOOGLE_GENAI_API_KEY
+huggingface:
+  fail_if_missing: false
+  require_token_for_models:
+  - google/medgemma-4b-it
+  - meta-llama/llama-3.2-3b-instruct
+  token_env_var: HF_TOKEN
 logging:
   level: INFO
   log_file: data/logs/questions_classifier.log
   save_to_file: true
+openrouter:
+  backoff_base: 2.0
+  backoff_cap: 240
+  backoff_jitter: 0.5
+  base_url: https://openrouter.ai/api/v1
+  default_headers:
+    HTTP-Referer: https://local.questions-benchmark
+    X-Title: Questions Classifier Benchmark
+  endpoint: /chat/completions
+  max_retries: 6
+  throttle_seconds: 12.0
+  timeout: 120
+  token_env_var: OPENROUTER_API_KEY
 qdrant:
   batch_size: 10
   collection_name: pubmed_papers

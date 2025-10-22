@@ -157,6 +157,61 @@ models:
       normalize_embeddings: true
       pooling: "mean"
 
+  # ==================== LLM GENERATION MODELS (7-8B Autoregressive) ====================
+
+  # TOP PRIORITY: Meta Llama 3.1 8B Instruct (SOTA open-source, December 2024)
+  llama31_8b:
+    name: "meta-llama/Llama-3.1-8B-Instruct"
+    approach: "llm_generation"
+    description: "Llama 3.1 8B - SOTA open-source model with 8B parameters"
+    params: "8B"
+    expected_vram_gb: 16.0
+    training_data: "15T+ tokens, multilingual"
+    best_for: "General instruction following, scientific reasoning"
+    paper: "https://ai.meta.com/blog/meta-llama-3-1/"
+    enabled: false
+    requires_auth: true
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      quantization: true
+
+  # Qwen2.5 7B Instruct (Alibaba, December 2024)
+  qwen25_7b:
+    name: "Qwen/Qwen2.5-7B-Instruct"
+    approach: "llm_generation"
+    description: "Qwen2.5 7B - Excellent for scientific text understanding"
+    params: "7B"
+    expected_vram_gb: 14.0
+    training_data: "Multilingual scientific and general data"
+    best_for: "Scientific text analysis, multilingual tasks"
+    paper: "https://qwenlm.github.io/blog/qwen2.5/"
+    enabled: false
+    requires_auth: true
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      quantization: true
+
+  # Mistral 7B Instruct v0.3 (Mistral AI, December 2024)
+  mistral_7b_v03:
+    name: "mistralai/Mistral-7B-Instruct-v0.3"
+    approach: "llm_generation"
+    description: "Mistral 7B v0.3 - Updated with improved instruction following"
+    params: "7B"
+    expected_vram_gb: 14.0
+    training_data: "Updated instruction corpus"
+    best_for: "Instruction following, code generation"
+    enabled: false
+    requires_auth: true
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      quantization: true
+
   # ==================== LLM GENERATION MODELS (3-4B Autoregressive) ====================
 
   # TOP PRIORITY: Google MedGemma 4B (Medical specialist, May 2025)
@@ -265,6 +320,239 @@ models:
       do_sample: false
       quantization: true
 
+  # ==================== ONLINE LLM MODELS (Paid APIs) ====================
+
+  # Anthropic Claude 3.5 Haiku (Fast, high-quality, cost-effective)
+  claude_35_haiku:
+    name: "claude-3-5-haiku-20241022"
+    approach: "llm_generation"
+    provider: "anthropic"
+    description: "Claude 3.5 Haiku - Fast and cost-effective reasoning model"
+    params: "-"
+    expected_vram_gb: 0.0
+    training_data: "Anthropic proprietary data"
+    best_for: "Fast scientific classification, cost-effective reasoning"
+    enabled: true
+    requires_auth: true
+    generation_config:
+      max_tokens: 16
+      temperature: 0.0
+    api_config:
+      throttle_seconds: 1.0
+      max_retries: 6
+      backoff_base: 2.0
+      backoff_cap: 180.0
+      backoff_jitter: 0.5
+
+  # OpenAI GPT-4o-mini (Cost-effective GPT-4o)
+  gpt4o_mini:
+    name: "gpt-4o-mini"
+    approach: "llm_generation"
+    provider: "openai"
+    description: "GPT-4o-mini - Cost-effective version of GPT-4o"
+    params: "-"
+    expected_vram_gb: 0.0
+    training_data: "OpenAI proprietary data"
+    best_for: "General reasoning, cost-effective classification"
+    enabled: true
+    requires_auth: true
+    generation_config:
+      max_tokens: 16
+      temperature: 0.0
+    api_config:
+      throttle_seconds: 1.0
+      max_retries: 6
+      backoff_base: 2.0
+      backoff_cap: 180.0
+      backoff_jitter: 0.5
+
+  # ==================== ONLINE LLM MODELS (OpenRouter) ====================
+
+  gemini_flash_openrouter:
+    name: "google/gemini-2.0-flash-exp:free"
+    approach: "llm_generation"
+    provider: "openrouter"
+    description: "Gemini 2.0 Flash Experimental via OpenRouter (low-latency reasoning)"
+    params: "-"
+    expected_vram_gb: 0.0
+    training_data: "Google Gemini proprietary corpora"
+    best_for: "Fast instruction following and reasoning over summaries"
+    enabled: false
+    requires_auth: true
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      max_context_length: 2000
+    api_config:
+      throttle_seconds: 12.0
+      max_retries: 8
+      backoff_base: 3.0
+      backoff_cap: 240.0
+      backoff_jitter: 0.5
+
+  gemini_25_flash_google:
+    name: "gemini-2.5-flash"
+    approach: "llm_generation"
+    provider: "google_genai"
+    description: "Google Gemini 2.5 Flash via Google AI Studio (high-speed reasoning)"
+    params: "-"
+    expected_vram_gb: 0.0
+    training_data: "Google Gemini proprietary corpora"
+    best_for: "Fast binary and multiclass scientific classification"
+    enabled: false
+    requires_auth: true
+    generation_config:
+      max_output_tokens: 16
+      temperature: 0.0
+    api_config:
+      throttle_seconds: 1.0
+      rate_limit_per_minute: 60
+      max_retries: 6
+      backoff_base: 2.0
+      backoff_cap: 180.0
+      backoff_jitter: 0.5
+
+  gpt_oss_20b_openrouter:
+    name: "openai/gpt-oss-20b:free"
+    approach: "llm_generation"
+    provider: "openrouter"
+    description: "OpenAI GPT-OSS 20B hosted on OpenRouter (general-purpose reasoning)"
+    params: "20B"
+    expected_vram_gb: 0.0
+    training_data: "OpenAI curated data mix"
+    best_for: "General scientific QA and classification prompts"
+    enabled: false
+    requires_auth: true
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      max_context_length: 2000
+    api_config:
+      throttle_seconds: 12.0
+      max_retries: 8
+      backoff_base: 3.0
+      backoff_cap: 240.0
+      backoff_jitter: 0.5
+
+  mistral_small_openrouter:
+    name: "mistralai/mistral-small-3.2-24b-instruct:free"
+    approach: "llm_generation"
+    provider: "openrouter"
+    description: "Mistral Small 3.2 24B via OpenRouter (balanced quality/speed)"
+    params: "24B"
+    expected_vram_gb: 0.0
+    training_data: "Mistral multilingual instruction corpus"
+    best_for: "Structured responses with low latency"
+    enabled: false
+    requires_auth: true
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      max_context_length: 2000
+    api_config:
+      throttle_seconds: 12.0
+      max_retries: 8
+      backoff_base: 3.0
+      backoff_cap: 240.0
+      backoff_jitter: 0.5
+
+  llama4_maverick_openrouter:
+    name: "meta-llama/llama-4-maverick:free"
+    approach: "llm_generation"
+    provider: "openrouter"
+    description: "Meta Llama 4 Maverick via OpenRouter (latest instruction-tuned release)"
+    params: "N/A"
+    expected_vram_gb: 0.0
+    training_data: "Meta Llama 4 instruction data"
+    best_for: "Advanced reasoning and explanation quality"
+    enabled: false
+    requires_auth: true
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      max_context_length: 2000
+    api_config:
+      throttle_seconds: 12.0
+      max_retries: 8
+      backoff_base: 3.0
+      backoff_cap: 240.0
+      backoff_jitter: 0.5
+
+  qwen3_235b_openrouter:
+    name: "qwen/qwen3-235b-a22b:free"
+    approach: "llm_generation"
+    provider: "openrouter"
+    description: "Alibaba Qwen3 235B (Mixture) via OpenRouter (state-of-the-art reasoning)"
+    params: "235B"
+    expected_vram_gb: 0.0
+    training_data: "Alibaba Qwen3 multilingual data"
+    best_for: "High-quality multilingual scientific reasoning"
+    enabled: false
+    requires_auth: true
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      max_context_length: 2000
+    api_config:
+      throttle_seconds: 12.0
+      max_retries: 8
+      backoff_base: 3.0
+      backoff_cap: 240.0
+      backoff_jitter: 0.5
+
+  # DeepSeek V3 (Free tier, SOTA reasoning)
+  deepseek_v3_openrouter:
+    name: "deepseek/deepseek-v3:free"
+    approach: "llm_generation"
+    provider: "openrouter"
+    description: "DeepSeek V3 via OpenRouter (latest SOTA reasoning model)"
+    params: "21B"
+    expected_vram_gb: 0.0
+    training_data: "DeepSeek proprietary data"
+    best_for: "Advanced reasoning, scientific analysis"
+    enabled: false
+    requires_auth: true
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      max_context_length: 2000
+    api_config:
+      throttle_seconds: 12.0
+      max_retries: 8
+      backoff_base: 3.0
+      backoff_cap: 240.0
+      backoff_jitter: 0.5
+
+  # Qwen2.5 72B (Free tier, large model)
+  qwen25_72b_openrouter:
+    name: "qwen/qwen2.5-72b-instruct:free"
+    approach: "llm_generation"
+    provider: "openrouter"
+    description: "Qwen2.5 72B via OpenRouter (large multilingual model)"
+    params: "72B"
+    expected_vram_gb: 0.0
+    training_data: "Qwen2.5 multilingual data"
+    best_for: "Large-scale multilingual reasoning"
+    enabled: false
+    requires_auth: true
+    generation_config:
+      max_new_tokens: 5
+      temperature: 0.0
+      do_sample: false
+      max_context_length: 2000
+    api_config:
+      throttle_seconds: 12.0
+      max_retries: 8
+      backoff_base: 3.0
+      backoff_cap: 240.0
+      backoff_jitter: 0.5
+
 # Benchmark settings
 benchmark:
   use_validation_papers: true
@@ -315,29 +603,108 @@ approaches:
 
   # LLM Generation approach
   llm_generation:
-    system_prompt: "You are a scientific paper analyzer specialized in aging research."
-    max_context_length: 2000
+    system_prompt: |
+      You are a longevity researcher who classifies scientific papers about aging.
+      Make every judgement using only the provided context.
+    max_context_length: 6000
     max_new_tokens: 5
     temperature: 0.0
     do_sample: false
     use_8bit_quantization: true
+    general_guidelines:
+      - Base your judgement strictly on the supplied context; ignore unstated assumptions.
+      - Grant a positive answer only when the passage provides clear, direct evidence for the claim.
+      - Treat speculative or hypothetical language without supporting data as insufficient.
+      - When the context is silent or ambiguous, respond with the negative/no option.
+      - Start your answer with the required label and follow it with a short rationale grounded in the context.
+    answer_format_binary: "Start your reply with \"Yes\" or \"No\" followed by a concise, evidence-based rationale."
+    answer_format_multiclass: "Start your reply with one of the provided options exactly as written, then add a concise, evidence-based rationale."
     prompt_template_binary: |
-      You are a scientific paper analyzer specialized in aging research.
+      {system_prompt}
 
-      Context: {paper_text}
+      General rubric:
+      {general_guidelines}
 
-      Question: {question_text}
+      Question-specific rubric for {question_id}:
+      {question_guidelines}
 
-      Answer with ONLY "Yes" or "No":
+      Context:
+      {paper_text}
+
+      Task: {question_text}
+
+      {answer_format_binary}
     prompt_template_multiclass: |
-      You are a scientific paper analyzer specialized in aging research.
+      {system_prompt}
 
-      Context: {paper_text}
+      General rubric:
+      {general_guidelines}
 
-      Question: {question_text}
+      Question-specific rubric for {question_id}:
+      {question_guidelines}
+
+      Context:
+      {paper_text}
+
+      Task: {question_text}
       Options: {options}
 
-      Answer with ONLY one of the options:
+      {answer_format_multiclass}
+    question_guidelines:
+      Q1:
+        - "Choose `Yes, quantitatively shown` when the context reports a measurable biomarker with quantitative evidence linking it to aging pace, mortality, or healthspan."
+        - "Choose `Yes, but not shown` when a biomarker is proposed or discussed for aging but no quantitative validation is presented."
+        - "Otherwise answer `No` when biomarkers are absent or unrelated to aging pace or mortality."
+      Q2:
+        - "Answer `Yes` when the passage explains aging through molecular or cellular mechanisms such as genes, proteins, pathways, or biochemical processes."
+        - "Answer `No` when it only states phenomenological observations or lacks molecular detail."
+      Q3:
+        - "Answer `Yes` if the passage proposes an actionable longevity intervention (drug, genetic manipulation, dietary change, environmental control) that could be tested."
+        - "Answer `No` when no intervention is suggested."
+      Q4:
+        - "Answer `Yes` only if the text explicitly claims aging cannot be reversed."
+        - "Answer `No` if it allows for reversibility, discusses rejuvenation, or does not address reversibility."
+      Q5:
+        - "Answer `Yes` when a biomarker or measurable trait is described as predicting maximal lifespan differences between species."
+        - "Answer `No` otherwise."
+      Q6:
+        - "Answer `Yes` when the passage provides a biological explanation for the naked mole rat's exceptional longevity (e.g., DNA repair, proteostasis, oxidative stress resistance, immune adaptation)."
+        - "Answer `No` when the naked mole rat is absent or no explanation is given."
+      Q7:
+        - "Answer `Yes` if the text explains why birds tend to outlive mammals (metabolic, physiological, ecological, or genetic reasons)."
+        - "Answer `No` otherwise."
+      Q8:
+        - "Answer `Yes` when it explains why larger animals live longer than smaller ones (metabolic scaling, predation, mutation rate, cell turnover, etc.)."
+        - "Answer `No` otherwise."
+      Q9:
+        - "Answer `Yes` when the text explains mechanisms behind lifespan extension from calorie restriction in vertebrates."
+        - "Answer `No` otherwise."
+      C1:
+        - "Answer `Yes` when the paper proposes biomarkers or measurable traits that account for maximal lifespan differences across species."
+        - "Answer `No` otherwise."
+      C2:
+        - "Answer `Yes` when the paper proposes biomarkers predicting mortality risk or healthspan within a species."
+        - "Answer `No` otherwise."
+      C3:
+        - "Answer `Yes` if the paper suggests specific longevity interventions that can be experimentally tested."
+        - "Answer `No` otherwise."
+      C4:
+        - "Answer `Yes` when the arguments focus on molecular or cellular mechanisms rather than purely phenomenological descriptions."
+        - "Answer `No` when the discussion remains descriptive or speculative without mechanistic detail."
+    question_keywords:
+      Q1: ["biomarker", "marker", "aging biomarker", "biological marker", "diagnostic marker"]
+      Q2: ["mechanism", "molecular", "pathway", "signaling", "gene", "protein", "molecular mechanism"]
+      Q3: ["intervention", "treatment", "therapy", "drug", "compound", "supplement", "longevity intervention", "experimentally test"]
+      Q4: ["cannot be reversed", "irreversible", "irreversibility", "aging cannot be reversed"]
+      Q5: ["maximal lifespan", "maximum lifespan", "cross-species", "species differences", "predicts lifespan", "lifespan across species"]
+      Q6: ["naked mole rat", "heterocephalus glaber"]
+      Q7: ["birds live longer", "avian longevity", "birds than mammals", "bird longevity"]
+      Q8: ["large animals", "body size", "allometric", "larger animals live longer", "size-longevity", "mass and lifespan"]
+      Q9: ["calorie restriction", "caloric restriction", "dietary restriction", "CR", "restricted diet"]
+      C1: ["maximal lifespan", "maximum lifespan", "cross-species biomarker", "species lifespan predictor"]
+      C2: ["mortality risk", "within species", "predict mortality", "healthspan", "survival risk"]
+      C3: ["intervention", "treatment", "therapeutic", "longevity intervention", "testable intervention"]
+      C4: ["mechanistic", "molecular pathway", "signaling pathway", "biochemical mechanism", "molecular driver"]
 
 # Metrics
 metrics:

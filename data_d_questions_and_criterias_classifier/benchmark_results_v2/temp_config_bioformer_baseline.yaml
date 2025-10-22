@@ -1,0 +1,351 @@
+anthropic:
+  backoff_base: 2.0
+  backoff_cap: 180
+  backoff_jitter: 0.5
+  http_options: {}
+  max_retries: 6
+  rate_limit_per_minute: 60
+  retry_statuses:
+  - 429
+  - 500
+  - 502
+  - 503
+  - 504
+  throttle_seconds: 1.0
+  timeout: 120
+  token_env_var: ANTHROPIC_API_KEY
+api:
+  host: 127.0.0.1
+  port: 8005
+  reload: false
+  workers: 1
+approaches:
+  llm_generation:
+    answer_format_binary: Start your reply with "Yes" or "No" followed by a concise,
+      evidence-based rationale.
+    answer_format_multiclass: Start your reply with one of the provided options exactly
+      as written, then add a concise, evidence-based rationale.
+    general_guidelines:
+    - Base your judgement strictly on the supplied context; ignore unstated assumptions.
+    - Grant a positive answer only when the passage provides clear, direct evidence
+      for the claim.
+    - Treat speculative or hypothetical language without supporting data as insufficient.
+    - When the context is silent or ambiguous, respond with the negative/no option.
+    - Start your answer with the required label and follow it with a short rationale
+      grounded in the context.
+    max_context_length: 6000
+    prompt_template_binary: '{system_prompt}
+
+
+      General rubric:
+
+      {general_guidelines}
+
+
+      Question-specific rubric for {question_id}:
+
+      {question_guidelines}
+
+
+      Context:
+
+      {paper_text}
+
+
+      Task: {question_text}
+
+
+      {answer_format_binary}
+
+      '
+    prompt_template_multiclass: '{system_prompt}
+
+
+      General rubric:
+
+      {general_guidelines}
+
+
+      Question-specific rubric for {question_id}:
+
+      {question_guidelines}
+
+
+      Context:
+
+      {paper_text}
+
+
+      Task: {question_text}
+
+      Options: {options}
+
+
+      {answer_format_multiclass}
+
+      '
+    question_guidelines:
+      C1:
+      - Answer `Yes` when the paper proposes biomarkers or measurable traits that
+        account for maximal lifespan differences across species.
+      - Answer `No` otherwise.
+      C2:
+      - Answer `Yes` when the paper proposes biomarkers predicting mortality risk
+        or healthspan within a species.
+      - Answer `No` otherwise.
+      C3:
+      - Answer `Yes` if the paper suggests specific longevity interventions that can
+        be experimentally tested.
+      - Answer `No` otherwise.
+      C4:
+      - Answer `Yes` when the arguments focus on molecular or cellular mechanisms
+        rather than purely phenomenological descriptions.
+      - Answer `No` when the discussion remains descriptive or speculative without
+        mechanistic detail.
+      Q1:
+      - Choose `Yes, quantitatively shown` when the context reports a measurable biomarker
+        with quantitative evidence linking it to aging pace, mortality, or healthspan.
+      - Choose `Yes, but not shown` when a biomarker is proposed or discussed for
+        aging but no quantitative validation is presented.
+      - Otherwise answer `No` when biomarkers are absent or unrelated to aging pace
+        or mortality.
+      Q2:
+      - Answer `Yes` when the passage explains aging through molecular or cellular
+        mechanisms such as genes, proteins, pathways, or biochemical processes.
+      - Answer `No` when it only states phenomenological observations or lacks molecular
+        detail.
+      Q3:
+      - Answer `Yes` if the passage proposes an actionable longevity intervention
+        (drug, genetic manipulation, dietary change, environmental control) that could
+        be tested.
+      - Answer `No` when no intervention is suggested.
+      Q4:
+      - Answer `Yes` only if the text explicitly claims aging cannot be reversed.
+      - Answer `No` if it allows for reversibility, discusses rejuvenation, or does
+        not address reversibility.
+      Q5:
+      - Answer `Yes` when a biomarker or measurable trait is described as predicting
+        maximal lifespan differences between species.
+      - Answer `No` otherwise.
+      Q6:
+      - Answer `Yes` when the passage provides a biological explanation for the naked
+        mole rat's exceptional longevity (e.g., DNA repair, proteostasis, oxidative
+        stress resistance, immune adaptation).
+      - Answer `No` when the naked mole rat is absent or no explanation is given.
+      Q7:
+      - Answer `Yes` if the text explains why birds tend to outlive mammals (metabolic,
+        physiological, ecological, or genetic reasons).
+      - Answer `No` otherwise.
+      Q8:
+      - Answer `Yes` when it explains why larger animals live longer than smaller
+        ones (metabolic scaling, predation, mutation rate, cell turnover, etc.).
+      - Answer `No` otherwise.
+      Q9:
+      - Answer `Yes` when the text explains mechanisms behind lifespan extension from
+        calorie restriction in vertebrates.
+      - Answer `No` otherwise.
+    question_keywords:
+      C1:
+      - maximal lifespan
+      - maximum lifespan
+      - cross-species biomarker
+      - species lifespan predictor
+      C2:
+      - mortality risk
+      - within species
+      - predict mortality
+      - healthspan
+      - survival risk
+      C3:
+      - intervention
+      - treatment
+      - therapeutic
+      - longevity intervention
+      - testable intervention
+      C4:
+      - mechanistic
+      - molecular pathway
+      - signaling pathway
+      - biochemical mechanism
+      - molecular driver
+      Q1:
+      - biomarker
+      - marker
+      - aging biomarker
+      - biological marker
+      - diagnostic marker
+      Q2:
+      - mechanism
+      - molecular
+      - pathway
+      - signaling
+      - gene
+      - protein
+      - molecular mechanism
+      Q3:
+      - intervention
+      - treatment
+      - therapy
+      - drug
+      - compound
+      - supplement
+      - longevity intervention
+      - experimentally test
+      Q4:
+      - cannot be reversed
+      - irreversible
+      - irreversibility
+      - aging cannot be reversed
+      Q5:
+      - maximal lifespan
+      - maximum lifespan
+      - cross-species
+      - species differences
+      - predicts lifespan
+      - lifespan across species
+      Q6:
+      - naked mole rat
+      - heterocephalus glaber
+      Q7:
+      - birds live longer
+      - avian longevity
+      - birds than mammals
+      - bird longevity
+      Q8:
+      - large animals
+      - body size
+      - allometric
+      - larger animals live longer
+      - size-longevity
+      - mass and lifespan
+      Q9:
+      - calorie restriction
+      - caloric restriction
+      - dietary restriction
+      - CR
+      - restricted diet
+    system_prompt: 'You are a longevity researcher who classifies scientific papers
+      about aging.
+
+      Make every judgement using only the provided context.
+
+      '
+classifier:
+  batch_size: 32
+  confidence_threshold: 0.5
+  max_length: 512
+  model_name: bioformers/bioformer-8L
+  quantize: false
+  random_seed: 1337
+  show_progress: true
+  sliding_window_size: 512
+  sliding_window_stride: 256
+  use_gpu: true
+criteria:
+  C1:
+    text: Proposes biomarkers explaining maximal lifespan across species
+    type: binary
+  C2:
+    text: Proposes biomarkers explaining mortality within species
+    type: binary
+  C3:
+    text: Predicts testable longevity interventions
+    type: binary
+  C4:
+    text: Is mechanistic (molecular pathways) rather than phenomenological
+    type: binary
+google_genai:
+  backoff_base: 2.0
+  backoff_cap: 180
+  backoff_jitter: 0.5
+  http_options: {}
+  max_retries: 6
+  rate_limit_per_minute: 60
+  retry_statuses:
+  - 429
+  - 500
+  - 502
+  - 503
+  - 504
+  throttle_seconds: 1.0
+  timeout: 120
+  token_env_var: GOOGLE_GENAI_API_KEY
+huggingface:
+  fail_if_missing: false
+  require_token_for_models:
+  - google/medgemma-4b-it
+  - meta-llama/llama-3.2-3b-instruct
+  token_env_var: HF_TOKEN
+logging:
+  level: INFO
+  log_file: data/logs/questions_classifier.log
+  save_to_file: true
+openai:
+  backoff_base: 2.0
+  backoff_cap: 180
+  backoff_jitter: 0.5
+  http_options: {}
+  max_retries: 6
+  rate_limit_per_minute: 60
+  retry_statuses:
+  - 429
+  - 500
+  - 502
+  - 503
+  - 504
+  throttle_seconds: 1.0
+  timeout: 120
+  token_env_var: OPENAI_API_KEY
+openrouter:
+  backoff_base: 2.0
+  backoff_cap: 240
+  backoff_jitter: 0.5
+  base_url: https://openrouter.ai/api/v1
+  default_headers:
+    HTTP-Referer: https://local.questions-benchmark
+    X-Title: Questions Classifier Benchmark
+  endpoint: /chat/completions
+  max_retries: 6
+  throttle_seconds: 12.0
+  timeout: 120
+  token_env_var: OPENROUTER_API_KEY
+qdrant:
+  batch_size: 10
+  collection_name: pubmed_papers
+  host: localhost
+  port: 6333
+questions:
+  Q1:
+    options:
+    - Yes, quantitatively shown
+    - Yes, but not shown
+    - 'No'
+    text: Does it suggest an aging biomarker (measurable entity reflecting aging pace
+      or health state, associated with mortality or age-related conditions)?
+    type: multiclass
+  Q2:
+    text: Does it suggest a molecular mechanism of aging?
+    type: binary
+  Q3:
+    text: Does it suggest a longevity intervention to test?
+    type: binary
+  Q4:
+    text: Does it claim that aging cannot be reversed?
+    type: binary
+  Q5:
+    text: Does it suggest a biomarker that predicts maximal lifespan differences between
+      species?
+    type: binary
+  Q6:
+    text: Does it explain why the naked mole rat can live 40+ years despite its small
+      size?
+    type: binary
+  Q7:
+    text: Does it explain why birds live much longer than mammals on average?
+    type: binary
+  Q8:
+    text: Does it explain why large animals live longer than small ones?
+    type: binary
+  Q9:
+    text: Does it explain why calorie restriction increases the lifespan of vertebrates?
+    type: binary

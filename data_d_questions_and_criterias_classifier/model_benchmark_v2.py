@@ -206,7 +206,12 @@ class ModelBenchmarkV2:
             requires_auth = self._model_requires_auth(model_config.get("name"), model_config.get("requires_auth"))
             quantize = bool(model_config.get("generation_config", {}).get("quantization", False))
             random_seed = model_config.get("random_config", {}).get("seed")
-            self._get_hf_token(required=requires_auth)
+            provider_value = model_config.get("provider")
+            provider_normalized = provider_value.lower() if isinstance(provider_value, str) else None
+            if provider_normalized in (None, "", "huggingface"):
+                self._get_hf_token(required=requires_auth)
+            else:
+                self._get_hf_token(required=False)
             result["requires_auth"] = requires_auth
 
             # Create temporary config (deep copy to avoid mutating the base config)
@@ -217,6 +222,21 @@ class ModelBenchmarkV2:
             temp_config["classifier"]["show_progress"] = self.show_progress
             if random_seed is not None:
                 temp_config["classifier"]["random_seed"] = random_seed
+            provider = provider_value
+            if provider:
+                temp_config["classifier"]["provider"] = provider
+            else:
+                temp_config["classifier"].pop("provider", None)
+            api_config = model_config.get("api_config")
+            if api_config:
+                temp_config["classifier"]["api"] = api_config
+            else:
+                temp_config["classifier"].pop("api", None)
+            generation_overrides = model_config.get("generation_config")
+            if generation_overrides:
+                temp_config["classifier"]["generation_config"] = generation_overrides
+            else:
+                temp_config["classifier"].pop("generation_config", None)
 
             temp_config_path = self.results_dir / f"temp_config_{model_key}.yaml"
             with open(temp_config_path, 'w', encoding='utf-8') as f:

@@ -3,8 +3,9 @@ BENCHMARK COMPARISON TABLE V2
 
 Model                     Approach        F1 (W)     F1 (Ma)    Acc (W)    Improve      Time/paper   Status         
 ------------------------------------------------------------------------------------------------------------------------
-pubmedbert_sbert          sentence_bert   0.5547     0.5547     0.4667     -5.84%       4.29         BEST           
-bioformer_baseline        embedding       0.5285     0.5285     0.4889     -10.29%      1.79         OK             
+pubmedbert_sbert          sentence_bert   0.5547     0.5547     0.4667     -5.84%       6.58         BEST           
 random_baseline           random          0.4926     0.4926     0.5778     -16.38%      0.00         OK             
-ministral_3b              -               ERROR      -          -          -            -            Failed         
+gpt4o_mini                llm_generation  0.3704     0.3704     0.6889     -37.12%      31.51        OK             
+bioformer_baseline        -               ERROR      -          -          -            -            Failed         
+claude_35_haiku           -               ERROR      -          -          -            -            Failed         
 ------------------------------------------------------------------------------------------------------------------------

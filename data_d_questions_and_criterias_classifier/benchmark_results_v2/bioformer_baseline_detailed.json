@@ -5,10 +5,10 @@
   "description": "Current baseline model (embedding approach)",
   "params": "108M",
   "training_data": null,
-  "timestamp": "2025-10-21T17:17:17.974895",
+  "timestamp": "2025-10-21T21:35:19.220950",
   "error": null,
   "requires_auth": false,
-  "init_time_sec": 0.01,
+  "init_time_sec": 0.02,
   "model_info": {
     "model_name": "bioformers/bioformer-8L",
     "approach": "embedding",
@@ -17,8 +17,8 @@
     "num_questions": 9,
     "num_criteria": 4
   },
-  "total_classification_time_sec": 8.61,
-  "avg_time_per_paper_sec": 1.72,
+  "total_classification_time_sec": 11.69,
+  "avg_time_per_paper_sec": 2.34,
   "metrics": {
     "overall": {
       "accuracy_micro": 0.4889,

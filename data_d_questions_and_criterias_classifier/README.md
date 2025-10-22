@@ -27,6 +27,7 @@
 - Main settings live in `config.yaml`, rewritten in UTF-8 without BOM.
 - `classifier` section controls base model, GPU usage, quantization, and tqdm progress visibility.
 - `huggingface` section specifies the environment variable used for authentication (`HF_TOKEN`) and models that demand it.
+- `openrouter` and `google_genai` sections describe API endpoints, throttling, and retry policies for remote LLM providers (OpenRouter, Google AI Studio).
 - Model definitions and benchmark parameters are stored in `models_config_v2.yaml`.
 
 ## Environment Management
@@ -35,6 +36,7 @@
   ```
   HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxx
   QDRANT_URL=http://localhost:6333
+  GOOGLE_GENAI_API_KEY=ai_xxxxxxxxxxxxxxxxxxxxx
   ```
 - `run.ps1` automatically reads `.env` and exposes values to all microservices; direct Poetry runs inherit the same settings via the Python autoload hook.
 

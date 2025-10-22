@@ -5,10 +5,10 @@
   "description": "Deterministic random baseline (fixed seed)",
   "params": "-",
   "training_data": "None",
-  "timestamp": "2025-10-21T17:17:36.747000",
+  "timestamp": "2025-10-22T17:31:18.468941",
   "error": null,
   "requires_auth": false,
-  "init_time_sec": 0.01,
+  "init_time_sec": 0.03,
   "model_info": {
     "model_name": "random_baseline",
     "approach": "random",
@@ -17,7 +17,7 @@
     "num_questions": 9,
     "num_criteria": 4
   },
-  "total_classification_time_sec": 0.02,
+  "total_classification_time_sec": 0.01,
   "avg_time_per_paper_sec": 0.0,
   "metrics": {
     "overall": {

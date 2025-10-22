@@ -1,31 +1,34 @@
 {
-  "model_key": "scibert",
-  "model_name": "allenai/scibert_scivocab_uncased",
-  "description": "BERT for scientific text",
-  "params": "110M",
-  "training_data": "Semantic Scholar papers (1.14M: 18% CS, 82% biomed)",
-  "timestamp": "2025-10-20T17:21:04.860721",
+  "model_key": "gemini_25_flash_google",
+  "model_name": "gemini-2.5-flash",
+  "approach": "llm_generation",
+  "description": "Google Gemini 2.5 Flash via Google AI Studio (high-speed reasoning)",
+  "params": "-",
+  "training_data": "Google Gemini proprietary corpora",
+  "timestamp": "2025-10-22T13:12:28.032323",
   "error": null,
+  "requires_auth": true,
   "init_time_sec": 0.01,
   "model_info": {
-    "model_name": "allenai/scibert_scivocab_uncased",
+    "model_name": "gemini-2.5-flash",
+    "approach": "llm_generation",
     "device": "cpu",
     "initialized": true,
     "num_questions": 9,
     "num_criteria": 4
   },
-  "total_classification_time_sec": 960.81,
-  "avg_time_per_paper_sec": 192.16,
+  "total_classification_time_sec": 332.13,
+  "avg_time_per_paper_sec": 66.43,
   "metrics": {
     "overall": {
       "accuracy_micro": 0.4667,
       "accuracy_macro": 0.4666666666666667,
       "accuracy_weighted": 0.4667,
-      "precision_micro": 0.5,
-      "recall_micro": 0.5,
-      "f1_micro": 0.5,
-      "f1_macro": 0.4529,
-      "f1_weighted": 0.4529,
+      "precision_micro": 0.0,
+      "recall_micro": 0.0,
+      "f1_micro": 0.0,
+      "f1_macro": 0.0,
+      "f1_weighted": 0.0,
       "total_support": 45
     },
     "per_question": {
@@ -43,32 +46,84 @@
         }
       },
       "Q2": {
-        "accuracy": 0.4,
-        "precision": 0.6667,
-        "recall": 0.5,
-        "f1_score": 0.5714,
+        "accuracy": 0.2,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
         "support": 5,
         "confusion_matrix": {
-          "tp": 2,
-          "tn": 0,
-          "fp": 1,
-          "fn": 2
+          "tp": 0,
+          "tn": 1,
+          "fp": 0,
+          "fn": 4
         }
       },
       "Q3": {
-        "accuracy": 0.4,
-        "precision": 0.6667,
-        "recall": 0.5,
-        "f1_score": 0.5714,
+        "accuracy": 0.2,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
         "support": 5,
         "confusion_matrix": {
-          "tp": 2,
-          "tn": 0,
-          "fp": 1,
-          "fn": 2
+          "tp": 0,
+          "tn": 1,
+          "fp": 0,
+          "fn": 4
         }
       },
       "Q4": {
+        "accuracy": 1.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "support": 5,
+        "confusion_matrix": {
+          "tp": 0,
+          "tn": 5,
+          "fp": 0,
+          "fn": 0
+        }
+      },
+      "Q5": {
+        "accuracy": 0.6,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "support": 5,
+        "confusion_matrix": {
+          "tp": 0,
+          "tn": 3,
+          "fp": 0,
+          "fn": 2
+        }
+      },
+      "Q6": {
+        "accuracy": 0.6,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "support": 5,
+        "confusion_matrix": {
+          "tp": 0,
+          "tn": 3,
+          "fp": 0,
+          "fn": 2
+        }
+      },
+      "Q7": {
+        "accuracy": 0.6,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
+        "support": 5,
+        "confusion_matrix": {
+          "tp": 0,
+          "tn": 3,
+          "fp": 0,
+          "fn": 2
+        }
+      },
+      "Q8": {
         "accuracy": 0.4,
         "precision": 0.0,
         "recall": 0.0,
@@ -77,73 +132,21 @@
         "confusion_matrix": {
           "tp": 0,
           "tn": 2,
-          "fp": 3,
-          "fn": 0
-        }
-      },
-      "Q5": {
-        "accuracy": 0.4,
-        "precision": 0.3333,
-        "recall": 0.5,
-        "f1_score": 0.4,
-        "support": 5,
-        "confusion_matrix": {
-          "tp": 1,
-          "tn": 1,
-          "fp": 2,
-          "fn": 1
-        }
-      },
-      "Q6": {
-        "accuracy": 0.8,
-        "precision": 0.6667,
-        "recall": 1.0,
-        "f1_score": 0.8,
-        "support": 5,
-        "confusion_matrix": {
-          "tp": 2,
-          "tn": 2,
-          "fp": 1,
-          "fn": 0
-        }
-      },
-      "Q7": {
-        "accuracy": 0.4,
-        "precision": 0.3333,
-        "recall": 0.5,
-        "f1_score": 0.4,
-        "support": 5,
-        "confusion_matrix": {
-          "tp": 1,
-          "tn": 1,
-          "fp": 2,
-          "fn": 1
-        }
-      },
-      "Q8": {
-        "accuracy": 0.6,
-        "precision": 0.6667,
-        "recall": 0.6667,
-        "f1_score": 0.6667,
-        "support": 5,
-        "confusion_matrix": {
-          "tp": 2,
-          "tn": 1,
-          "fp": 1,
-          "fn": 1
+          "fp": 0,
+          "fn": 3
         }
       },
       "Q9": {
-        "accuracy": 0.6,
-        "precision": 0.6667,
-        "recall": 0.6667,
-        "f1_score": 0.6667,
+        "accuracy": 0.4,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1_score": 0.0,
         "support": 5,
         "confusion_matrix": {
-          "tp": 2,
-          "tn": 1,
-          "fp": 1,
-          "fn": 1
+          "tp": 0,
+          "tn": 2,
+          "fp": 0,
+          "fn": 3
         }
       }
     },
@@ -160,43 +163,43 @@
           },
           "Q2": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q3": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q4": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q5": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q6": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q7": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q8": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q9": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           }
         }
       },
@@ -212,43 +215,43 @@
           },
           "Q2": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q3": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q4": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q5": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q6": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q7": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q8": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q9": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           }
         }
       },
@@ -368,43 +371,43 @@
           },
           "Q2": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q3": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q4": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q5": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q6": {
             "manual": "Yes",
-            "predicted": "Yes",
-            "match": true
+            "predicted": "No",
+            "match": false
           },
           "Q7": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q8": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           },
           "Q9": {
             "manual": "No",
-            "predicted": "Yes",
-            "match": false
+            "predicted": "No",
+            "match": true
           }
         }
       }
@@ -412,10 +415,10 @@
     "num_papers": 5
   },
   "num_papers_classified": 5,
-  "f1_weighted": 0.4529,
-  "f1_macro": 0.4529,
-  "f1_micro": 0.5,
+  "f1_weighted": 0.0,
+  "f1_macro": 0.0,
+  "f1_micro": 0.0,
   "accuracy_weighted": 0.4667,
-  "improvement_absolute": -0.1362,
-  "improvement_percent": -23.12
+  "improvement_absolute": -0.5891,
+  "improvement_percent": -100.0
 }
