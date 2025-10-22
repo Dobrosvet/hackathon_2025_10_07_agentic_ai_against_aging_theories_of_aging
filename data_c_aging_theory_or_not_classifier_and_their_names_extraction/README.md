@@ -1,336 +1,111 @@
-# Aging Theory Classifier and NER Service v2.0
+# Aging Theory Classifier & NER Service
 
-Микросервис для классификации научных статей по теориям старения и извлечения названий теорий с использованием **Bioformer-8L** и гибридного подхода.
+## Overview
+This microservice classifies full-text PMC articles that already contain aging-theory markers and writes the results back to the shared `pubmed_papers` Qdrant collection. It can operate with four detection modes (`keyword`, `embedding`, `hybrid`, `gpt4o`) and exposes REST plus WebSocket APIs for automation and human-in-the-loop review. Manual reviewers can label papers and attach rationale fragments; classification progress and logs stream in real time.
 
-## 🆕 Новые возможности (v2.0)
+Default port: `8004` (overridable in `config.yaml`).
 
-### 1. Интеграция реальной модели Bioformer-8L
-- Использует biomedical transformer `bioformers/bioformer-8L` из HuggingFace
-- Zero-shot classification через semantic embeddings
-- GPU батчинг для высокой производительности
+## Code structure
+| File | Responsibility |
+| --- | --- |
+| `main.py` | FastAPI service, background classifier, manual review endpoints, WebSocket updates |
+| `aging_theory_classifier.py` | High-level orchestrator that wraps the available inference modes |
+| `pubmedbert_classifier.py` | SentenceTransformer wrapper (`pritamdeka/S-PubMedBert-MS-MARCO`) with batching utilities |
+| `batch_processor.py` | Helper for batched embedding inference (used when `supports_batch_embeddings` is true) |
+| `qdrant_storage.py` | Reads and updates `pubmed_papers` payloads, tracks manual labels, skip flags, statistics |
+| `config.yaml` | Runtime configuration and model variant catalogue |
+| `pyproject.toml` | Poetry dependencies (`sentence-transformers`, `openai`, `fastapi`, `qdrant-client`, …) |
 
-### 2. Гибридный подход (Hybrid Mode)
-- **Stage 1**: Keyword pre-filtering (быстрый отсев нерелевантных текстов)
-- **Stage 2**: Bioformer verification (точная классификация)
-- Комбинирует скорость keyword matching и точность ML модели
+Logs land in `../data/logs`. Exports or ancillary data are not generated here.
 
-### 3. Расширенная база теорий
-- **30+ теорий старения** (было 17)
-- **200+ вариаций названий**
-- Включает Hallmarks of Aging (López-Otín et al. 2023)
+## Classification modes
+Mode selection happens in `config.yaml` under `classifier.model_variant` and may be overridden at launch with `AGING_CLASSIFIER_MODEL_VARIANT`.
 
-### 4. Оптимизация производительности
-- GPU батчинг (batch_size configurable)
-- Sliding window для длинных текстов
-- Опциональная int8 quantization
-- Ленивая загрузка модели (экономия памяти)
+| Mode | Description |
+| --- | --- |
+| `keyword` | Pure phrase matching against the curated theory lexicon |
+| `embedding` | PubMedBERT sentence embeddings + cosine similarity (default) |
+| `hybrid` | Keyword pre-filter + PubMedBERT verification |
+| `gpt4o` | Delegates decisions to `gpt-4o-mini` via OpenAI’s chat completions API |
 
----
+`gpt4o` requires `OPENAI_API_KEY` in the environment. The embedding modes perform all computation locally and respect the `use_gpu` flag in the classifier config.
 
-## 📋 Режимы работы
+## Configuration highlights
+`config.yaml` stores:
+- `classifier.model_variants` — ready-to-use profiles (`pubmedbert_sbert`, `gpt4o_mini`).
+- `classifier.embedding_model` and `classifier.llm_model` — resolved model names after variant selection.
+- API binding (`api.host`, `api.port`, etc.).
+- Qdrant connection string (`qdrant.host`, `qdrant.port`).
 
-Конфигурируется в `config.yaml`:
+Set `AGING_CLASSIFIER_MODEL_VARIANT=gpt4o_mini` to switch to GPT-4o-mini without editing the YAML.
 
-### Keyword Mode (по умолчанию)
-```yaml
-classifier:
-  mode: "keyword"
-```
-- **Скорость**: ~100 статей/сек
-- **Точность**: ~70% precision, ~60% recall
-- **Использование**: Быстрая классификация больших объемов
+## API surface
+### REST
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/` | Service health probe |
+| `GET` | `/api/status` | Classification job state (`status`, counters, preview text, totals) |
+| `POST` | `/api/start` | Launch classifier in the background |
+| `POST` | `/api/stop` | Request graceful stop |
+| `GET` | `/api/paper/{pmc_id}` | Retrieve payload snapshot (full text, classifications, annotations) |
+| `GET` | `/api/papers/unreviewed` | List papers with full text but no `manual_label` (supports `limit`, `offset`) |
+| `POST` | `/api/papers/{pmc_id}/label` | Persist manual label (`{"label": bool, "comment": ""}`) |
+| `GET` | `/api/papers/labeled` | List already reviewed items (with pagination) |
+| `POST` | `/api/papers/{pmc_id}/skip` | Mark a paper as skipped |
 
-### Bioformer Mode
-```yaml
-classifier:
-  mode: "bioformer"
-  use_gpu: true
-```
-- **Скорость**: ~5-50 статей/сек (зависит от GPU)
-- **Точность**: ~90% precision, ~85% recall (оценка)
-- **Использование**: Максимальная точность
+### WebSocket
+`/ws` emits:
+- `state` — full `service_state` snapshot (status, counters, highlighted spans, etc.).
+- `log` — individual log entries.
+- `logs` — last 100 log entries on connect.
 
-### Hybrid Mode (рекомендуется)
-```yaml
-classifier:
-  mode: "hybrid"
-  use_gpu: true
-  batch_size: 32
-```
-- **Скорость**: ~30-80 статей/сек
-- **Точность**: ~85% precision, ~80% recall (оценка)
-- **Использование**: Оптимальный баланс скорости и точности
+## Data written to Qdrant
+Classification batches call `qdrant_storage.update_papers_batch`, which stores:
+- `questions_classification` — answers for Q1–Q9 (`{"Q1": {"answer": "...", "confidence": ...}, ...}`).
+- `criteria_classification` — answers for C1–C4 in the same format.
+- `questions_timestamp` — ISO timestamp of the last run.
+- `manual_annotations` — reviewer-added rationale fragments (`{"type": "Q1", "answer": ..., "fragment": {...}}`).
+- `manual_label`, `manual_label_timestamp`, `user_comment`, and `review_status` for human decisions.
+- `skip_timestamp` when reviewers skip a paper.
 
----
+Statistics endpoints rely on these payload fields to count progress.
 
-## 🛠️ Установка
-
-### 1. Установка зависимостей
-
+## Running locally
 ```powershell
-# Перейти в директорию
 cd data_c_aging_theory_or_not_classifier_and_their_names_extraction
-
-# Установить зависимости через pip (рекомендуется)
-.\.venv\Scripts\python.exe -m pip install fastapi uvicorn websockets
-.\.venv\Scripts\python.exe -m pip install httpx qdrant-client tqdm
-.\.venv\Scripts\python.exe -m pip install pyyaml
-
-# Для Bioformer mode - установить ML зависимости
-.\.venv\Scripts\python.exe -m pip install torch transformers accelerate sentencepiece
+poetry install
+# add OPENAI_API_KEY to the environment if you plan to use gpt4o_mini
+poetry run uvicorn main:app --host 0.0.0.0 --port 8004
 ```
 
-### 2. Конфигурация
+Ensure Qdrant is reachable at the location defined in `config.yaml` and that services A and B have already populated `pubmed_papers` with metadata and full texts.
 
-Отредактируйте `config.yaml`:
-
-```yaml
-classifier:
-  mode: "keyword"  # Начните с keyword для тестирования
-  use_gpu: false   # Включите true если есть NVIDIA GPU
-  batch_size: 32
-
-api:
-  port: 8004
-```
-
-### 3. Запуск
-
+### Example: start a classification run
 ```powershell
-# Запуск через venv
-.\.venv\Scripts\python.exe main.py
-
-# Или через run.ps1 (запускает все сервисы)
-cd ../..
-powershell -File run.ps1
+Invoke-RestMethod -Method Post http://127.0.0.1:8004/api/start
 ```
 
----
-
-## 📊 Новые теории старения
-
-### Hallmarks of Aging (из базы)
-1. Genomic Instability
-2. Telomere Attrition
-3. Epigenetic Alterations
-4. Loss of Proteostasis
-5. Disabled Macroautophagy
-6. Deregulated Nutrient Sensing
-7. Mitochondrial Dysfunction
-8. Cellular Senescence
-9. Stem Cell Exhaustion
-10. Altered Intercellular Communication
-11. Chronic Inflammation (Inflammaging)
-12. Dysbiosis
-
-### Классические теории
-- Free Radical Theory
-- DNA Damage Theory
-- Disposable Soma Theory
-- Antagonistic Pleiotropy
-- Immunosenescence
-- Caloric Restriction Theory
-- Glycation Theory
-- Neuroendocrine Theory
-- Cross-Linking Theory
-- Rate of Living Theory
-- И другие...
-
-**Всего: 30 теорий с 200+ вариациями названий**
-
----
-
-## 🚀 API Endpoints
-
-### Health Check
-```http
-GET http://127.0.0.1:8004/
-```
-
-### Статус классификации
-```http
-GET http://127.0.0.1:8004/api/status
-```
-
-### Запуск классификации
-```http
-POST http://127.0.0.1:8004/api/start
-```
-
-### Остановка
-```http
-POST http://127.0.0.1:8004/api/stop
-```
-
-### WebSocket (real-time обновления)
-```javascript
-const ws = new WebSocket('ws://127.0.0.1:8004/ws');
-```
-
----
-
-## ⚙️ Конфигурация (config.yaml)
-
-Полная конфигурация:
-
-```yaml
-classifier:
-  mode: "hybrid"              # keyword | bioformer | hybrid
-  use_gpu: true               # Использовать GPU
-  quantize: false             # int8 quantization
-  bioformer_threshold: 0.6    # Порог similarity
-  batch_size: 32              # Размер батча
-
-performance:
-  max_text_length: 10000
-  sliding_window_size: 512
-  sliding_window_stride: 256
-
-qdrant:
-  host: "localhost"
-  port: 6333
-  collection_name: "pubmed_papers"
-  batch_size: 10
-
-logging:
-  level: "INFO"
-  save_to_file: true
-
-api:
-  host: "127.0.0.1"
-  port: 8004
-```
-
----
-
-## 📈 Производительность
-
-### Keyword Mode
-- CPU: ~100 статей/сек
-- GPU: N/A (не использует)
-
-### Bioformer Mode
-- CPU: ~5 статей/сек
-- GPU (batch=32): ~50-80 статей/сек
-- GPU + quantization: ~100-150 статей/сек
-
-### Hybrid Mode
-- CPU: ~20 статей/сек (keyword filter эффективен)
-- GPU (batch=32): ~30-80 статей/сек
-
-*Замеры на NVIDIA RTX 3090, batch_size=32*
-
----
-
-## 🧪 Тестирование
-
-### Тест базы данных теорий
+### Example: label a paper
 ```powershell
-.\.venv\Scripts\python.exe theory_database.py
+Invoke-RestMethod -Method Post `
+  -Uri http://127.0.0.1:8004/api/papers/123456/label `
+  -Body (@{label=$true; comment="Clear mitochondrial theory."} | ConvertTo-Json) `
+  -ContentType "application/json"
 ```
 
-### Тест Bioformer классификатора
-```powershell
-.\.venv\Scripts\python.exe bioformer_classifier.py
-```
+## Dependencies
+Key packages (see `pyproject.toml` for versions):
+- `fastapi`, `uvicorn`, `websockets` — service layer.
+- `qdrant-client` — persistence.
+- `sentence-transformers`, `torch` — embedding mode.
+- `openai` — GPT-4o-mini integration.
+- `pandas`, `numpy` are pulled indirectly by `sentence-transformers`.
 
-### Тест гибридного классификатора
-```powershell
-.\.venv\Scripts\python.exe aging_theory_classifier.py
-```
+Install everything with `poetry install`; do not run scripts outside the Poetry environment.
 
----
-
-## 🔧 Troubleshooting
-
-### Bioformer не загружается
-Проверьте установку ML библиотек:
-```powershell
-.\.venv\Scripts\python.exe -c "import torch, transformers; print('OK')"
-```
-
-### GPU не используется
-Проверьте CUDA:
-```powershell
-.\.venv\Scripts\python.exe -c "import torch; print(torch.cuda.is_available())"
-```
-
-### Fallback на keyword mode
-Если Bioformer недоступен, система автоматически fallback на keyword mode.
-
----
-
-## 📝 Архитектура
-
-```
-data_c_aging_theory_or_not_classifier_and_their_names_extraction/
-├── theory_database.py           # База 30+ теорий
-├── bioformer_classifier.py      # Bioformer-8L wrapper
-├── aging_theory_classifier.py   # Гибридный классификатор
-├── batch_processor.py           # GPU батчинг
-├── qdrant_storage.py            # Интеграция с Qdrant
-├── main.py                      # FastAPI сервер
-├── config.yaml                  # Конфигурация
-├── pyproject.toml               # Dependencies
-└── README.md                    # Эта документация
-```
-
----
-
-## 🔬 Технологии
-
-- **ML Framework**: PyTorch + Transformers (HuggingFace)
-- **Model**: Bioformer-8L (42M parameters, 8 layers)
-- **Backend**: FastAPI + Uvicorn + WebSocket
-- **Database**: Qdrant Vector Database
-- **GPU**: CUDA support (NVIDIA)
-- **Config**: YAML configuration
-
----
-
-## 📚 Ссылки
-
-- **Bioformer Paper**: [arXiv:2302.01588](https://arxiv.org/abs/2302.01588)
-- **HuggingFace Model**: [bioformers/bioformer-8L](https://huggingface.co/bioformers/bioformer-8L)
-- **Hallmarks of Aging**: López-Otín et al. (2013, 2023)
-
----
-
-## 🎯 Quick Start
-
-1. **Тестовый запуск (keyword mode)**:
-   ```powershell
-   .\.venv\Scripts\python.exe main.py
-   ```
-
-2. **Открыть UI**: http://localhost:5173
-
-3. **Нажать "Start Classification"**
-
-4. **Переключение на Bioformer**:
-   - Отредактировать `config.yaml` → `mode: "hybrid"`
-   - Установить PyTorch + Transformers
-   - Перезапустить сервис
-
----
-
-## ✨ Changelog
-
-### v2.0 (Latest)
-- ✅ Интеграция Bioformer-8L
-- ✅ Гибридный режим (keyword + ML)
-- ✅ 30+ теорий с 200+ вариациями
-- ✅ GPU батчинг
-- ✅ Конфигурация через YAML
-- ✅ Производительность оптимизирована
-
-### v1.0
-- Keyword-based классификация
-- 17 теорий старения
-- WebSocket real-time updates
-
----
-
-**Готово к использованию! 🚀**
-
-Для вопросов и предложений см. документацию в коде.
+## Operational notes
+- `/api/start` rejects concurrent runs; `/api/stop` flips the state to `stopped`, which the worker loop respects.
+- Classification batches flush every 10 papers to limit write amplification. Remaining items are saved when the loop finishes.
+- Preview text in `service_state["current_text_preview"]` is capped at 2 000 characters to keep WebSocket payloads manageable.
+- Manual skips and labels update `review_status` so reviewers can revisit their decisions later.
+- `config.yaml` is UTF-8 without BOM (strictly enforced by the repository tooling).

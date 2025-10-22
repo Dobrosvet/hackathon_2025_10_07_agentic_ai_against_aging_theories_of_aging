@@ -1,141 +1,147 @@
-"""
-Гибридный классификатор теорий старения
-Комбинирует keyword matching (быстрый) и Bioformer-8L (точный)
-"""
-
+import json
 import logging
-from typing import Dict, List, Any, Optional
+import os
 import re
+from typing import Any, Dict, List, Optional
+
+from pubmedbert_classifier import PubmedBertClassifier
 
 logger = logging.getLogger(__name__)
 
 
 class AgingTheoryClassifier:
     """
-    Гибридный классификатор теорий старения
-
-    3 режима работы:
-    - keyword: Только keyword matching (быстро, но менее точно)
-    - bioformer: Только Bioformer-8L (медленно, но точно)
-    - hybrid: Комбинация обоих (оптимально)
+    Классификатор теорий старения с переключаемыми режимами:
+    - keyword  : быстрый эвристический поиск по шаблонам
+    - embedding: sentence-transformers (PubMedBERT) + косинусное сходство
+    - hybrid   : keyword + embedding
+    - gpt4o    : GPT-4o-mini через OpenAI API
     """
 
     def __init__(
         self,
-        mode: str = "hybrid",
+        mode: str = "embedding",
         use_gpu: bool = True,
         bioformer_threshold: float = 0.6,
-        quantize: bool = False
+        quantize: bool = False,
+        embedding_model_name: str = "pritamdeka/S-PubMedBert-MS-MARCO",
+        llm_model_name: str = "gpt-4o-mini",
+        llm_temperature: float = 0.0,
+        llm_max_tokens: int = 256,
+        openai_api_key: Optional[str] = None,
     ):
-        """
-        Инициализация классификатора
+        normalized_mode = (mode or "embedding").lower()
+        if normalized_mode == "bioformer":
+            normalized_mode = "embedding"
 
-        Args:
-            mode: Режим работы - "keyword", "bioformer", "hybrid"
-            use_gpu: Использовать GPU для Bioformer
-            bioformer_threshold: Порог similarity для Bioformer классификации
-            quantize: Использовать quantization для Bioformer
-        """
-        self.mode = mode
-        self.model_name = "bioformer-8L-hybrid"
-        self.version = "2.0"
+        self.mode = normalized_mode
+        self.version = "3.0"
+        self.embedding_model_name = embedding_model_name
+        self.llm_model_name = llm_model_name
+        self.llm_temperature = llm_temperature
+        self.llm_max_tokens = llm_max_tokens
+        self._openai_api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
+        self._openai_client = None
+
         self.bioformer_threshold = bioformer_threshold
+        self.embedding_threshold = bioformer_threshold
 
-        # Загрузить расширенную базу теорий
         try:
             from theory_database import theory_db
+
             self.theory_patterns = theory_db.get_all_theories()
-            logger.info(f"Loaded {len(self.theory_patterns)} theories from database")
+            logger.info("Loaded %d theory patterns", len(self.theory_patterns))
         except ImportError:
             logger.warning("theory_database not found, using fallback patterns")
             self.theory_patterns = self._get_fallback_patterns()
 
-        # Контекстные слова для уточнения поиска
         self.context_keywords = [
-            "aging", "ageing", "senescence", "longevity",
-            "lifespan", "theory", "hypothesis", "mechanism",
-            "gerontology", "geriatric", "age-related",
-            "age-associated", "hallmarks"
+            "aging",
+            "ageing",
+            "senescence",
+            "longevity",
+            "lifespan",
+            "theory",
+            "hypothesis",
+            "mechanism",
+            "gerontology",
+            "age-related",
+            "age-associated",
+            "hallmarks",
         ]
 
-        # Инициализировать Bioformer (если нужен)
-        self.bioformer = None
-        if mode in ["bioformer", "hybrid"]:
+        self.bioformer: Optional[PubmedBertClassifier] = None
+        if self.mode in ["embedding", "hybrid"]:
             try:
-                from bioformer_classifier import BioformerClassifier
-                self.bioformer = BioformerClassifier(
+                self.bioformer = PubmedBertClassifier(
+                    model_name=self.embedding_model_name,
                     use_gpu=use_gpu,
                     quantize=quantize,
-                    batch_size=16
+                    batch_size=16,
+                    max_length=512,
                 )
-                logger.info(f"Bioformer classifier initialized (lazy loading)")
-            except ImportError as e:
-                logger.warning(f"Bioformer not available: {e}, falling back to keyword mode")
+                logger.info("PubMedBERT embedding classifier ready (lazy loading)")
+            except Exception as exc:
+                logger.warning(
+                    "Failed to initialize PubMedBERT classifier (%s). Switching to keyword mode.",
+                    exc,
+                )
                 self.mode = "keyword"
+                self.bioformer = None
 
-        logger.info(f"AgingTheoryClassifier initialized in {self.mode} mode")
-        logger.info(f"Model: {self.model_name} v{self.version}")
+        self.supports_batch_embeddings = self.mode in {"embedding", "hybrid"} and self.bioformer is not None
 
-    def _get_fallback_patterns(self) -> Dict[str, List[str]]:
-        """Fallback паттерны если theory_database недоступна"""
-        return {
-            "Mitochondrial Dysfunction": [
-                "mitochondrial theory", "mitochondrial dysfunction"
-            ],
-            "Cellular Senescence": [
-                "cellular senescence", "senescent cells"
-            ],
-            "Telomere Attrition": [
-                "telomere attrition", "telomere shortening"
-            ]
-        }
+        if self.mode == "gpt4o":
+            self.model_name = self.llm_model_name
+        elif self.mode == "keyword":
+            self.model_name = "keyword-matcher"
+        elif self.mode == "hybrid":
+            self.model_name = "keyword+pubmedbert"
+        else:
+            self.model_name = "pubmedbert-sbert"
 
+        logger.info(
+            "AgingTheoryClassifier initialized. mode=%s, model=%s, version=%s",
+            self.mode,
+            self.model_name,
+            self.version,
+        )
+
+    # ---------------------------------------------------------------------
+    # Classification entrypoints
+    # ---------------------------------------------------------------------
     def classify_aging_theory(self, text: str) -> Dict[str, Any]:
-        """
-        Классификация: является ли статья о теории старения
-
-        Args:
-            text: Полный текст статьи
-
-        Returns:
-            Dict с результатами классификации
-        """
-        if not text or len(text.strip()) < 100:
-            return {
-                "is_aging_theory": False,
-                "confidence": 0.0,
-                "keyword_matches": 0,
-                "reasoning": "Text too short",
-                "method": self.mode
-            }
-
         try:
             if self.mode == "keyword":
                 return self._classify_keyword_only(text)
-            elif self.mode == "bioformer":
-                return self._classify_bioformer_only(text)
-            elif self.mode == "hybrid":
+            if self.mode == "embedding":
+                return self._classify_embedding_only(text)
+            if self.mode == "hybrid":
                 return self._classify_hybrid(text)
-            else:
-                raise ValueError(f"Unknown mode: {self.mode}")
-
-        except Exception as e:
-            logger.error(f"Error in classification: {e}")
+            if self.mode == "gpt4o":
+                return self._classify_gpt4o_only(text)
+            raise ValueError(f"Unknown mode: {self.mode}")
+        except Exception as exc:
+            logger.error("Classification error: %s", exc)
             return {
                 "is_aging_theory": False,
                 "confidence": 0.0,
                 "keyword_matches": 0,
-                "error": str(e),
-                "method": self.mode
+                "error": str(exc),
+                "method": self.mode,
             }
 
-    def _classify_keyword_only(self, text: str) -> Dict[str, Any]:
-        """Быстрая классификация только keyword matching"""
-        text_lower = text.lower()
+    # Backwards compatibility aliases
+    def _classify_bioformer_only(self, text: str) -> Dict[str, Any]:
+        return self._classify_embedding_only(text)
 
-        # Подсчет совпадений теорий
+    # ---------------------------------------------------------------------
+    # Keyword classification
+    # ---------------------------------------------------------------------
+    def _classify_keyword_only(self, text: str) -> Dict[str, Any]:
+        text_lower = text.lower()
         theory_matches = 0
-        matched_theories = []
+        matched_theories: List[str] = []
 
         for theory_name, patterns in self.theory_patterns.items():
             for pattern in patterns:
@@ -143,23 +149,13 @@ class AgingTheoryClassifier:
                     theory_matches += 1
                     if theory_name not in matched_theories:
                         matched_theories.append(theory_name)
-                    break  # Считаем теорию только один раз
+                    break
 
-        # Подсчет контекстных слов
-        context_matches = sum(
-            1 for keyword in self.context_keywords if keyword in text_lower
-        )
-
-        # Логика классификации:
-        # - Минимум 2 разные теории старения
-        # - Или 1 теория + много контекстных слов (>= 5)
+        context_matches = sum(1 for keyword in self.context_keywords if keyword in text_lower)
         is_theory = theory_matches >= 2 or (theory_matches >= 1 and context_matches >= 5)
 
-        # Расчет уверенности (confidence)
         if is_theory:
-            # Базовая уверенность от количества теорий
             base_confidence = min(theory_matches / 5.0, 0.7)
-            # Бонус от контекста
             context_bonus = min(context_matches / 20.0, 0.3)
             confidence = min(base_confidence + context_bonus, 1.0)
         else:
@@ -172,292 +168,275 @@ class AgingTheoryClassifier:
             "context_matches": context_matches,
             "matched_theories_count": len(matched_theories),
             "matched_theories": matched_theories[:5],
-            "method": "keyword"
+            "method": "keyword",
         }
 
-    def _classify_bioformer_only(self, text: str) -> Dict[str, Any]:
-        """Точная классификация через Bioformer-8L"""
+    # ---------------------------------------------------------------------
+    # Embedding classification
+    # ---------------------------------------------------------------------
+    def _classify_embedding_only(self, text: str) -> Dict[str, Any]:
         if not self.bioformer:
-            logger.warning("Bioformer not available, falling back to keyword")
+            logger.warning("Embedding classifier unavailable, falling back to keywords")
             return self._classify_keyword_only(text)
 
-        result = self.bioformer.classify_text(text, threshold=self.bioformer_threshold)
+        result = self.bioformer.classify_text(text, threshold=self.embedding_threshold)
+        top_theories = result.get("matched_theories", [])
 
-        # Конвертировать в стандартный формат
         return {
-            "is_aging_theory": result["is_aging_theory"],
-            "confidence": result["confidence"],
-            "matched_theories": [t["theory"] for t in result.get("matched_theories", [])[:5]],
-            "matched_theories_count": len(result.get("matched_theories", [])),
-            "bioformer_top_theories": result.get("matched_theories", [])[:3],
-            "method": "bioformer"
+            "is_aging_theory": result.get("is_aging_theory", False),
+            "confidence": result.get("confidence", 0.0),
+            "matched_theories": [item.get("theory") for item in top_theories[:5]],
+            "matched_theories_count": len(top_theories),
+            "pubmedbert_top_theories": top_theories[:3],
+            "method": "pubmedbert",
         }
 
+    # ---------------------------------------------------------------------
+    # Hybrid classification
+    # ---------------------------------------------------------------------
     def _classify_hybrid(self, text: str) -> Dict[str, Any]:
-        """
-        Гибридная классификация (оптимально)
-
-        Stage 1: Keyword pre-filter (быстрый) - отсеивает явно нерелевантные
-        Stage 2: Bioformer verification (точный) - для потенциально релевантных
-        """
-        # Stage 1: Keyword pre-filtering
         keyword_result = self._classify_keyword_only(text)
 
-        # Быстрый отсев: если keyword уверенно говорит "НЕТ"
         if keyword_result["keyword_matches"] == 0 and keyword_result["context_matches"] < 3:
             keyword_result["method"] = "hybrid-keyword-rejected"
             return keyword_result
 
-        # Быстрое принятие: если keyword уверенно говорит "ДА"
         if keyword_result["keyword_matches"] >= 5 and keyword_result["context_matches"] >= 10:
             keyword_result["method"] = "hybrid-keyword-accepted"
             return keyword_result
 
-        # Stage 2: Bioformer verification для пограничных случаев
-        if self.bioformer:
-            bioformer_result = self.bioformer.classify_text(
-                text,
-                threshold=self.bioformer_threshold
-            )
-
-            # Комбинировать результаты
-            # Если Bioformer уверен - используем его
-            if bioformer_result["confidence"] >= 0.8:
-                return {
-                    "is_aging_theory": bioformer_result["is_aging_theory"],
-                    "confidence": bioformer_result["confidence"],
-                    "matched_theories": [t["theory"] for t in bioformer_result.get("matched_theories", [])[:5]],
-                    "keyword_matches": keyword_result["keyword_matches"],
-                    "context_matches": keyword_result["context_matches"],
-                    "bioformer_confidence": bioformer_result["confidence"],
-                    "method": "hybrid-bioformer-decided"
-                }
-
-            # Взвешенное комбинирование
-            combined_confidence = (
-                keyword_result["confidence"] * 0.4 +
-                bioformer_result["confidence"] * 0.6
-            )
-
-            is_theory = combined_confidence >= 0.5
-
-            return {
-                "is_aging_theory": is_theory,
-                "confidence": round(combined_confidence, 3),
-                "matched_theories": [t["theory"] for t in bioformer_result.get("matched_theories", [])[:5]],
-                "keyword_matches": keyword_result["keyword_matches"],
-                "context_matches": keyword_result["context_matches"],
-                "keyword_confidence": keyword_result["confidence"],
-                "bioformer_confidence": bioformer_result["confidence"],
-                "method": "hybrid-combined"
-            }
-        else:
-            # Fallback to keyword if Bioformer unavailable
+        if not self.bioformer:
             keyword_result["method"] = "hybrid-keyword-fallback"
             return keyword_result
 
+        embedding_result = self.bioformer.classify_text(text, threshold=self.embedding_threshold)
+        embedding_conf = embedding_result.get("confidence", 0.0)
+
+        if embedding_conf >= 0.8:
+            return {
+                "is_aging_theory": embedding_result.get("is_aging_theory", False),
+                "confidence": embedding_conf,
+                "matched_theories": [
+                    item.get("theory")
+                    for item in embedding_result.get("matched_theories", [])[:5]
+                ],
+                "keyword_matches": keyword_result["keyword_matches"],
+                "context_matches": keyword_result["context_matches"],
+                "pubmedbert_confidence": embedding_conf,
+                "method": "hybrid-pubmedbert-decided",
+            }
+
+        combined_confidence = (
+            keyword_result["confidence"] * 0.4 + embedding_conf * 0.6
+        )
+        is_theory = combined_confidence >= 0.5
+
+        return {
+            "is_aging_theory": is_theory,
+            "confidence": round(combined_confidence, 3),
+            "matched_theories": [
+                item.get("theory")
+                for item in embedding_result.get("matched_theories", [])[:5]
+            ],
+            "keyword_matches": keyword_result["keyword_matches"],
+            "context_matches": keyword_result["context_matches"],
+            "keyword_confidence": keyword_result["confidence"],
+            "pubmedbert_confidence": embedding_conf,
+            "method": "hybrid-combined",
+        }
+
+    # ---------------------------------------------------------------------
+    # GPT-4o classification
+    # ---------------------------------------------------------------------
+    def _classify_gpt4o_only(self, text: str) -> Dict[str, Any]:
+        client = self._ensure_openai_client()
+
+        system_prompt = (
+            "You are a senior longevity researcher. "
+            "Analyse the provided passage and decide whether it proposes or "
+            "discusses a scientific theory of aging. Respond in JSON."
+        )
+        user_prompt = (
+            "Return a JSON object with keys: "
+            "`is_aging_theory` (boolean), "
+            "`confidence` (float 0-1), "
+            "`matched_theories` (array of theory names or empty array), "
+            "`rationale` (string). "
+            "Text:\n"
+            f"{text.strip()}"
+        )
+
+        response = client.chat.completions.create(
+            model=self.llm_model_name,
+            temperature=self.llm_temperature,
+            max_tokens=self.llm_max_tokens,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
+
+        content = ""
+        if response.choices and response.choices[0].message:
+            content = response.choices[0].message.content or ""
+
+        try:
+            parsed = json.loads(content)
+        except json.JSONDecodeError:
+            logger.warning("GPT-4o response is not valid JSON: %s", content)
+            parsed = {}
+
+        matched_theories = parsed.get("matched_theories") or []
+        if isinstance(matched_theories, str):
+            matched_theories = [matched_theories]
+
+        return {
+            "is_aging_theory": bool(parsed.get("is_aging_theory")),
+            "confidence": float(parsed.get("confidence", 0.0)),
+            "matched_theories": matched_theories[:5],
+            "matched_theories_count": len(matched_theories),
+            "rationale": parsed.get("rationale", ""),
+            "method": "gpt4o-mini",
+        }
+
+    def _ensure_openai_client(self):
+        if self._openai_client:
+            return self._openai_client
+
+        if not self._openai_api_key:
+            raise RuntimeError("OPENAI_API_KEY is required for GPT-4o classification")
+
+        try:
+            from openai import OpenAI
+        except ImportError as exc:
+            raise RuntimeError(
+                "openai package is required for GPT-4o classification. "
+                "Install it inside the poetry environment."
+            ) from exc
+
+        self._openai_client = OpenAI(api_key=self._openai_api_key)
+        logger.info("OpenAI client initialized for model %s", self.llm_model_name)
+        return self._openai_client
+
+    # ---------------------------------------------------------------------
+    # Entity extraction
+    # ---------------------------------------------------------------------
     def extract_theory_names(self, text: str) -> List[Dict[str, Any]]:
-        """
-        Named Entity Recognition: извлечение названий теорий и их позиций
-        Использует keyword matching с Bioformer scoring (если доступен)
-
-        Args:
-            text: Полный текст статьи
-
-        Returns:
-            List of dicts с информацией о найденных теориях
-        """
         if not text or len(text.strip()) < 100:
             return []
 
-        try:
-            # Keyword-based NER
-            found_theories = self._extract_keyword_entities(text)
+        keyword_entities = self._extract_keyword_entities(text)
 
-            # Bioformer scoring (если включен)
-            if self.mode in ["bioformer", "hybrid"] and self.bioformer:
-                found_theories = self._score_entities_with_bioformer(text, found_theories)
+        if self.mode in {"embedding", "hybrid"} and self.bioformer:
+            embedding_entities = self.bioformer.extract_entities_with_sliding_window(text)
+            merged = self._merge_entities(keyword_entities, embedding_entities)
+        else:
+            merged = keyword_entities
 
-            # Сортировка по позиции
-            found_theories.sort(key=lambda x: x['start_position'])
-
-            logger.info(f"Found {len(found_theories)} theory mentions ({self.mode} mode)")
-            return found_theories
-
-        except Exception as e:
-            logger.error(f"Error in NER extraction: {e}")
-            return []
+        merged.sort(key=lambda ent: ent["start_position"])
+        logger.info("Found %d theory mentions (mode=%s)", len(merged), self.mode)
+        return merged
 
     def _extract_keyword_entities(self, text: str) -> List[Dict[str, Any]]:
-        """Извлечение entities через keyword matching"""
-        found_theories = []
         text_lower = text.lower()
+        entities: List[Dict[str, Any]] = []
 
-        # Поиск всех паттернов
         for theory_name, patterns in self.theory_patterns.items():
             for pattern in patterns:
                 pattern_lower = pattern.lower()
-                start = 0
-
-                # Находим все вхождения паттерна
-                while True:
-                    pos = text_lower.find(pattern_lower, start)
-                    if pos == -1:
-                        break
-
-                    # Извлекаем оригинальный текст
-                    original_text = text[pos:pos + len(pattern)]
-
-                    # Проверяем word boundary
-                    is_word_boundary = True
-                    if pos > 0:
-                        prev_char = text[pos - 1]
-                        if prev_char.isalnum():
-                            is_word_boundary = False
-
-                    end_pos = pos + len(pattern)
-                    if end_pos < len(text):
-                        next_char = text[end_pos]
-                        if next_char.isalnum():
-                            is_word_boundary = False
-
-                    if is_word_boundary:
-                        # Извлекаем контекст
-                        context_start = max(0, pos - 100)
-                        context_end = min(len(text), pos + len(pattern) + 100)
-                        context = text[context_start:context_end].strip()
-                        context = re.sub(r'\s+', ' ', context)
-
-                        # Проверка на дубликаты
-                        is_duplicate = False
-                        for existing in found_theories:
-                            if (existing['theory_name'] == theory_name and
-                                abs(existing['start_position'] - pos) < 10):
-                                is_duplicate = True
-                                break
-
-                        if not is_duplicate:
-                            found_theories.append({
-                                "theory_name": theory_name,
-                                "matched_text": original_text,
-                                "start_position": pos,
-                                "end_position": pos + len(pattern),
-                                "confidence": 0.95,  # Keyword match
-                                "context_snippet": context,
-                                "method": "keyword"
-                            })
-
-                    start = pos + 1
-
-        return found_theories
-
-    def _score_entities_with_bioformer(
-        self,
-        text: str,
-        entities: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
-        """
-        Пересчитать confidence для entities используя Bioformer
-
-        Args:
-            text: Полный текст
-            entities: Список entities из keyword extraction
-
-        Returns:
-            Entities с обновленными confidence scores
-        """
-        if not entities or not self.bioformer:
-            return entities
-
-        # Использовать sliding window + Bioformer scoring
-        # TODO: Реализовать более продвинутый scoring
-        # Пока просто добавим метку что использован Bioformer
-        for entity in entities:
-            entity["method"] = "hybrid-keyword-bioformer-scored"
+                for match in re.finditer(re.escape(pattern_lower), text_lower):
+                    start, end = match.start(), match.end()
+                    matched_text = text[start:end]
+                    entities.append(
+                        {
+                            "theory_name": theory_name,
+                            "matched_text": matched_text,
+                            "start_position": start,
+                            "end_position": end,
+                            "confidence": 0.3,
+                            "method": "keyword",
+                        }
+                    )
 
         return entities
 
-    def process_paper(self, text: str) -> Dict[str, Any]:
-        """
-        Полная обработка статьи: классификация + NER
+    def _merge_entities(self, keyword_entities, embedding_entities):
+        merged = {(
+            entity["theory_name"],
+            entity["start_position"],
+            entity["end_position"],
+        ): entity for entity in keyword_entities}
 
-        Args:
-            text: Полный текст статьи
-
-        Returns:
-            Dict с результатами классификации и списком найденных теорий
-        """
-        try:
-            # Классификация
-            classification_result = self.classify_aging_theory(text)
-
-            # NER (только если классифицировано как теория старения)
-            if classification_result['is_aging_theory']:
-                theories = self.extract_theory_names(text)
+        for entity in embedding_entities:
+            key = (
+                entity["theory_name"],
+                entity["start_position"],
+                entity["end_position"],
+            )
+            if key in merged:
+                merged_entity = merged[key]
+                merged_entity["confidence"] = max(
+                    merged_entity.get("confidence", 0.0),
+                    entity.get("confidence", 0.0),
+                )
+                merged_entity["method"] = "keyword+pubmedbert"
             else:
-                theories = []
+                merged[key] = entity
 
-            return {
-                "is_aging_theory": classification_result['is_aging_theory'],
-                "classification_confidence": classification_result['confidence'],
-                "aging_theories": theories,
-                "classification_model": self.model_name,
-                "classification_version": self.version,
-                "classification_method": classification_result.get("method", self.mode),
-                "total_theories_found": len(theories),
-                "keyword_matches": classification_result.get("keyword_matches", 0),
-                "context_matches": classification_result.get("context_matches", 0)
-            }
+        return list(merged.values())
 
-        except Exception as e:
-            logger.error(f"Error processing paper: {e}")
-            raise
+    # Backwards compatibility alias
+    def _score_entities_with_bioformer(self, text: str, entities: List[Dict[str, Any]]):
+        if not self.bioformer:
+            return entities
 
+        embedding_entities = self.bioformer.extract_entities_with_sliding_window(text)
+        return self._merge_entities(entities, embedding_entities)
+
+    # ---------------------------------------------------------------------
+    # End-to-end processing
+    # ---------------------------------------------------------------------
+    def process_paper(self, text: str) -> Dict[str, Any]:
+        classification = self.classify_aging_theory(text)
+        theories = self.extract_theory_names(text) if classification["is_aging_theory"] else []
+
+        return {
+            "is_aging_theory": classification["is_aging_theory"],
+            "classification_confidence": classification["confidence"],
+            "aging_theories": theories,
+            "classification_model": self.model_name,
+            "classification_version": self.version,
+            "classification_method": classification.get("method", self.mode),
+            "total_theories_found": len(theories),
+            "keyword_matches": classification.get("keyword_matches", 0),
+            "context_matches": classification.get("context_matches", 0),
+        }
+
+    # ---------------------------------------------------------------------
+    # Info helpers
+    # ---------------------------------------------------------------------
     def get_model_info(self) -> Dict[str, Any]:
-        """Получить информацию о классификаторе"""
         info = {
             "model_name": self.model_name,
             "version": self.version,
             "mode": self.mode,
             "theories_count": len(self.theory_patterns),
-            "bioformer_enabled": self.bioformer is not None
+            "supports_batch_embeddings": self.supports_batch_embeddings,
         }
 
         if self.bioformer:
-            info["bioformer_info"] = self.bioformer.get_model_info()
+            info["embedding_model"] = self.bioformer.get_model_info()
+
+        if self.mode == "gpt4o":
+            info["llm_model_name"] = self.llm_model_name
+            info["llm_temperature"] = self.llm_temperature
 
         return info
 
-
-if __name__ == "__main__":
-    # Тестирование
-    logging.basicConfig(level=logging.INFO)
-
-    print("=== Hybrid Aging Theory Classifier Test ===\n")
-
-    # Тестовый текст
-    test_text = """
-    Aging is characterized by multiple hallmarks including genomic instability,
-    telomere attrition, epigenetic alterations, loss of proteostasis, and
-    cellular senescence. The mitochondrial theory of aging suggests that
-    mitochondrial dysfunction plays a central role. Recent studies on
-    inflammaging and immunosenescence provide new insights into the aging process.
-    """
-
-    # Тест всех режимов
-    for mode in ["keyword", "hybrid"]:  # Пропускаем bioformer для быстрого теста
-        print(f"\n--- Testing {mode.upper()} mode ---")
-        classifier = AgingTheoryClassifier(mode=mode, use_gpu=False)
-
-        result = classifier.process_paper(test_text)
-
-        print(f"Is aging theory: {result['is_aging_theory']}")
-        print(f"Confidence: {result['classification_confidence']:.3f}")
-        print(f"Method: {result['classification_method']}")
-        print(f"Keyword matches: {result.get('keyword_matches', 'N/A')}")
-        print(f"Theories found: {result['total_theories_found']}")
-
-        if result['aging_theories']:
-            print("Detected theories:")
-            for theory in result['aging_theories'][:3]:
-                print(f"  - {theory['theory_name']} ({theory['confidence']:.2f})")
+    @staticmethod
+    def _get_fallback_patterns() -> Dict[str, List[str]]:
+        return {
+            "Mitochondrial Dysfunction": ["mitochondrial theory", "mitochondrial dysfunction"],
+            "Cellular Senescence": ["cellular senescence", "senescent cells"],
+            "Telomere Attrition": ["telomere attrition", "telomere shortening"],
+        }

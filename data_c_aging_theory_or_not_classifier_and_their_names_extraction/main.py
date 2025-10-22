@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
@@ -24,11 +25,35 @@ def load_config():
     config_path = Path(__file__).parent / "config.yaml"
     if config_path.exists():
         with open(config_path, 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
-    return {
-        "classifier": {"mode": "keyword", "use_gpu": False, "batch_size": 32},
-        "api": {"host": "127.0.0.1", "port": 8004}
-    }
+            config = yaml.safe_load(f)
+    else:
+        config = {
+            "classifier": {"mode": "keyword", "use_gpu": False, "batch_size": 32},
+            "api": {"host": "127.0.0.1", "port": 8004},
+        }
+
+    classifier_cfg = config.setdefault("classifier", {})
+    variant_from_env = os.getenv("AGING_CLASSIFIER_MODEL_VARIANT")
+    if variant_from_env:
+        classifier_cfg["model_variant"] = variant_from_env
+
+    variants = classifier_cfg.get("model_variants", {})
+    active_variant = classifier_cfg.get("model_variant")
+    if active_variant and active_variant in variants:
+        variant_cfg = variants[active_variant] or {}
+        for key, value in variant_cfg.items():
+            if key == "generation_config":
+                continue
+            classifier_cfg[key] = value
+
+    if "mode" not in classifier_cfg:
+        classifier_cfg["mode"] = "embedding"
+    if "embedding_model_name" not in classifier_cfg and "embedding_model" not in classifier_cfg:
+        classifier_cfg["embedding_model"] = "pritamdeka/S-PubMedBert-MS-MARCO"
+    if "llm_model" not in classifier_cfg:
+        classifier_cfg["llm_model"] = "gpt-4o-mini"
+
+    return config
 
 config = load_config()
 
@@ -127,13 +152,22 @@ classifier_config = config.get("classifier", {})
 classifier = AgingTheoryClassifier(
     mode=classifier_config.get("mode", "keyword"),
     use_gpu=classifier_config.get("use_gpu", False),
-    bioformer_threshold=classifier_config.get("bioformer_threshold", 0.6),
-    quantize=classifier_config.get("quantize", False)
+    bioformer_threshold=classifier_config.get("bioformer_threshold", classifier_config.get("embedding_threshold", 0.6)),
+    quantize=classifier_config.get("quantize", False),
+    embedding_model_name=classifier_config.get("embedding_model") or classifier_config.get("embedding_model_name", "pritamdeka/S-PubMedBert-MS-MARCO"),
+    llm_model_name=classifier_config.get("llm_model", "gpt-4o-mini"),
+    llm_temperature=classifier_config.get("llm_temperature", 0.0),
+    llm_max_tokens=classifier_config.get("llm_max_tokens", 256),
+    openai_api_key=classifier_config.get("openai_api_key")
 )
 qdrant_storage = QdrantStorage(str(DB_DIR))
 
 # Log classifier info
-logger.info(f"Classifier mode: {classifier_config.get('mode', 'keyword')}")
+logger.info(
+    "Classifier configured: mode=%s variant=%s",
+    classifier_config.get("mode", "embedding"),
+    classifier_config.get("model_variant", "pubmedbert_sbert"),
+)
 logger.info(f"Classifier info: {classifier.get_model_info()}")
 
 

@@ -1,83 +1,112 @@
-# Questions and Criterias Classifier Microservice
+# Questions & Criteria Classifier Service
 
-## Purpose
-- Automates annotation of scientific papers against nine aging-related questions (Q1–Q9) and four evaluation criteria (C1–C4).
-- Supports multiple inference approaches: NLI, sentence embeddings, cross-encoders, and autoregressive LLMs.
-- Integrates with Qdrant for validation data and logging infrastructure under `data/logs`.
+## Overview
+This microservice classifies ageing-related papers that already passed the theory detector (service C). It produces answers for nine research questions (Q1–Q9) and four evaluation criteria (C1–C4), stores the results in the `pubmed_papers` Qdrant collection, and exposes REST/WebSocket APIs for automation and manual review. Classification is handled by `QuestionsClassifierV2`, a pluggable wrapper that supports sentence embeddings, cross-encoders, and remote LLM providers.
 
-## Validation Scope
-### Questions (Q1–Q9)
-- Q1: Detects whether a paper proposes an aging biomarker.
-- Q2: Captures statements about molecular mechanisms of aging.
-- Q3: Identifies suggested longevity interventions.
-- Q4: Flags claims that aging cannot be reversed.
-- Q5: Looks for biomarkers explaining maximal lifespan gaps between species.
-- Q6: Explains naked mole rat longevity.
-- Q7: Explains avian longevity versus mammals.
-- Q8: Explains why larger animals live longer.
-- Q9: Explains calorie restriction longevity effects.
+Default port: `8005` (overridable via `config.yaml`).
 
-### Criteria (C1–C4)
-- C1: Biomarkers explaining lifespan across species.
-- C2: Biomarkers for mortality inside species.
-- C3: Predicts testable longevity interventions.
-- C4: Focuses on mechanistic (molecular) explanations.
+## Code structure
+| File | Responsibility |
+| --- | --- |
+| `main.py` | FastAPI app, background classification loop, manual review endpoints, validation utilities |
+| `questions_classifier_v2.py` | Core classifier with sliding-window context extraction, provider integrations, and multiple approaches |
+| `models_config_v2.yaml` | Model catalogue used by the benchmarking script |
+| `config.yaml` | Service settings, model variants, and provider throttling |
+| `qdrant_storage.py` | Reads/writes classification payloads, manual annotations, validation sets |
+| `tests/test_llm_generation.py` | Unit tests covering authentication and OpenAI/Google/Anthropic call flows |
 
-## Configuration
-- Main settings live in `config.yaml`, rewritten in UTF-8 without BOM.
-- `classifier` section controls base model, GPU usage, quantization, and tqdm progress visibility.
-- `huggingface` section specifies the environment variable used for authentication (`HF_TOKEN`) and models that demand it.
-- `openrouter` and `google_genai` sections describe API endpoints, throttling, and retry policies for remote LLM providers (OpenRouter, Google AI Studio).
-- Model definitions and benchmark parameters are stored in `models_config_v2.yaml`.
+Logs are written to `../data/logs`. The service expects Qdrant at `http://localhost:6333` with papers that already contain `full_text` and `is_aging_theory=True`.
 
-## Environment Management
-- All runtime variables are loaded from `.env` in the repository root using `python-dotenv` and the PowerShell launcher.
-- Example `.env`:
-  ```
-  HF_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxx
-  QDRANT_URL=http://localhost:6333
-  GOOGLE_GENAI_API_KEY=ai_xxxxxxxxxxxxxxxxxxxxx
-  ```
-- `run.ps1` automatically reads `.env` and exposes values to all microservices; direct Poetry runs inherit the same settings via the Python autoload hook.
+## Model selection
+`config.yaml` defines two ready-to-use variants under `classifier.model_variants`:
+- `pubmedbert_sbert` (default): sentence-transformer inference via Hugging Face.
+- `gpt4o_mini`: OpenAI GPT-4o-mini generation.
 
-## Hugging Face Token (mandatory for gated LLMs)
-1. Create a personal access token with at least `read` scope: https://huggingface.co/settings/tokens.
-2. Add `HF_TOKEN` to `.env` and (optionally) export it in the current PowerShell session:
-   - Session only: `$Env:HF_TOKEN = 'hf_xxxxxxxxxxxxxxxxxxxxx'`
-   - Persistent fallback: `setx HF_TOKEN "hf_xxxxxxxxxxxxxxxxxxxxx"`
-3. Validate the token via Poetry: `poetry run huggingface-cli whoami`.
-4. `run.ps1` aborts if `HF_TOKEN` is missing to protect gated models such as `google/medgemma-4b-it` and `meta-llama/Llama-3.2-3B-Instruct`.
+Set the environment variable `QUESTIONS_CLASSIFIER_MODEL_VARIANT` before start-up to switch profiles without editing the file:
+```powershell
+$env:QUESTIONS_CLASSIFIER_MODEL_VARIANT = "gpt4o_mini"
+```
 
-## Dependencies
-- Python dependencies are managed by Poetry (`pyproject.toml` / `poetry.lock`).
-- New runtime packages: `transformers >= 4.45`, `accelerate`, `huggingface-hub`, `safetensors`, `bitsandbytes`.
-- GPU: NVIDIA GTX 1070 (8 GB) requires CUDA drivers compatible with PyTorch 2.1+ and bitsandbytes 0.45.
-- Client dashboard now uses Bun instead of npm.
+Depending on the chosen approach, the classifier may require:
+- `HF_TOKEN` (Hugging Face auth for gated models).
+- `OPENROUTER_API_KEY` (OpenRouter providers in `models_config_v2.yaml`).
+- `GOOGLE_GENAI_API_KEY` (Gemini 2.5 Flash).
+- `ANTHROPIC_API_KEY`.
+- `OPENAI_API_KEY`.
 
-## Launching Services
-1. Run PowerShell as Administrator.
-2. Ensure `HF_TOKEN` is set and `bun` is available (`Get-Command bun`).
-3. Execute `.\run.ps1`. The script:
-   - Stops previous processes and frees required ports.
-   - Verifies `HF_TOKEN`.
-   - Boots all microservices via Poetry (`poetry run python main.py`).
-   - Starts the client with `bun run dev`.
-4. Access points (default ports):
-   - Questions API: `http://127.0.0.1:8005`
-   - Client UI: `http://localhost:5173`
-   - Qdrant REST: `http://localhost:6333`
+`questions_classifier_v2.py` loads these keys from `.env` automatically (`_load_env_from_file`).
+
+## API surface
+### REST
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/` | Health probe |
+| `GET` | `/api/status` | Worker state (progress, counts, preview text, current classification) |
+| `POST` | `/api/start` | Launch the classifier in the background |
+| `POST` | `/api/stop` | Request graceful stop |
+| `GET` | `/api/paper/{pmc_id}` | Retrieve a single paper with stored classifications and annotations |
+| `POST` | `/api/paper/{pmc_id}/annotate` | Append manual rationale (`{"annotation_type": "Q1", "answer": ..., "fragment": {...}}`) |
+| `POST` | `/api/paper/{pmc_id}/delete_annotation` | Remove a manual annotation by index |
+| `GET` | `/api/validation/papers` | Return validation set entries (`is_validation_data=True`) |
+| `GET` | `/api/validation/metrics` | Aggregate metrics for validation papers |
+| `POST` | `/api/validation/classify` | Run the classifier over all validation papers |
+| `GET` | `/api/validation/comparison/{paper_url}` | Compare model vs. manual answers for one validation paper |
+
+### WebSocket
+`/ws` emits:
+- `state` — `service_state` snapshot (status, counters, previews, totals).
+- `log` — individual log entries.
+- `logs` — last 100 log entries on connect.
+
+Use the feed to stream progress into dashboards without polling REST endpoints.
+
+## Data written to Qdrant
+Successful batches call `qdrant_storage.update_papers_batch`, which stores:
+- `questions_classification` (answers for Q1–Q9, including `answer`, `confidence`, and LLM free text where applicable).
+- `criteria_classification` (answers for C1–C4).
+- `questions_timestamp` (ISO timestamp).
+- `manual_annotations` (reviewer-provided fragments tied to question IDs).
+- `manual_label`, `manual_label_timestamp`, `user_comment`, `review_status` for manual QA.
+- Validation helpers (`is_validation_data`, `validation_questions`, etc.) remain untouched unless validation routes are used.
+
+The service never modifies vectors; it only enriches payloads.
+
+## Running locally
+```powershell
+cd data_d_questions_and_criterias_classifier
+poetry install
+poetry run uvicorn main:app --host 0.0.0.0 --port 8005
+```
+
+Prerequisites:
+1. Qdrant running at the configured address.
+2. Services A, B, and C have populated `pubmed_papers` with full texts and `is_aging_theory=True`.
+3. Relevant API keys exported (see “Model selection”).
+
+### Example requests
+```powershell
+# Start a classification run
+Invoke-RestMethod -Method Post http://127.0.0.1:8005/api/start
+
+# Inspect status
+Invoke-RestMethod http://127.0.0.1:8005/api/status | ConvertTo-Json -Depth 5
+
+# Add a manual annotation
+Invoke-RestMethod -Method Post `
+  -Uri http://127.0.0.1:8005/api/paper/123456/annotate `
+  -Body (@{annotation_type="Q3"; answer="Yes"; fragment=@{text="..."; start_position=120; end_position=160}} | ConvertTo-Json) `
+  -ContentType "application/json"
+```
 
 ## Testing
-- Unit tests reside under `tests/` (added for LLM authentication and generation).
-- Run the full suite inside the Poetry environment:
-  ```
-  poetry run pytest
-  ```
-- Benchmark smoke test: `poetry run python model_benchmark_v2.py` (requires populated Qdrant and valid HF token).
+Run the existing suite (covers provider authentication and error handling):
+```powershell
+poetry run pytest
+```
 
-## Useful Commands
-- Inspect validation papers in Qdrant: `curl http://localhost:6333/collections`.
-- Manual classifier run on a sample: `poetry run python questions_classifier_v2.py`.
-- Clear Poetry virtual environment cache if needed: `poetry env remove --all`.
-
-Keep all scripts and configuration files in UTF-8 (no BOM) and avoid executing Python outside the Poetry context to maintain dependency reproducibility.
+## Operational notes
+- `/api/start` rejects concurrent runs; `/api/stop` switches `service_state["status"]` to `"stopped"`, which the worker loop honours before writing new batches.
+- Batches flush every 10 papers; remaining items are saved when the loop finishes.
+- `QuestionsClassifierV2` extracts context using question-specific keywords and sliding windows to stay within provider limits (`max_context_length` in `config.yaml`).
+- `models_config_v2.yaml` is used by `model_benchmark_v2.py` to evaluate multiple models; it does not affect the runtime service unless you explicitly swap `classifier.model_name`.
+- All configuration files are UTF-8 without BOM; avoid editing with editors that inject BOM markers.

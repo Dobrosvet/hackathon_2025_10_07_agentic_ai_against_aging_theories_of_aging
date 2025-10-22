@@ -1,7 +1,26 @@
 # Questions and Criterias Classifier Service configuration
 
 classifier:
-  model_name: "bioformers/bioformer-8L"
+  model_name: "pritamdeka/S-PubMedBert-MS-MARCO"
+  provider: "huggingface"
+  approach: "sentence_bert"
+  model_variant: "pubmedbert_sbert"
+  model_variants:
+    pubmedbert_sbert:
+      model_name: "pritamdeka/S-PubMedBert-MS-MARCO"
+      provider: "huggingface"
+      approach: "sentence_bert"
+      use_gpu: true
+      quantize: false
+    gpt4o_mini:
+      model_name: "gpt-4o-mini"
+      provider: "openai"
+      approach: "llm_generation"
+      use_gpu: false
+      quantize: false
+      generation_config:
+        max_tokens: 16
+        temperature: 0.0
   use_gpu: true
   quantize: false
   random_seed: 1337

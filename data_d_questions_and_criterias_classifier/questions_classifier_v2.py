@@ -1,4 +1,4 @@
-"""
+﻿"""
 Questions and Criterias Classifier v2
 Supports multiple approaches: NLI, Sentence-BERT, Cross-Encoder, and traditional embeddings
 """
@@ -108,7 +108,7 @@ class QuestionsClassifierV2:
         self._progress_enabled = bool(self.classifier_config.get("show_progress", True))
 
         # Model settings
-        self.model_name = model_name or self.classifier_config.get("model_name", "bioformers/bioformer-8L")
+        self.model_name = model_name or self.classifier_config.get("model_name", "pritamdeka/S-PubMedBert-MS-MARCO")
         self.approach = approach
         self._use_gpu = use_gpu
         self._quantize = quantize

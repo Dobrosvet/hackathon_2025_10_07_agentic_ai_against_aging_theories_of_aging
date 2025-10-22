@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any
@@ -10,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 
-from questions_classifier import QuestionsClassifier
+from questions_classifier_v2 import QuestionsClassifierV2
 from qdrant_storage import QdrantStorage
 from validation_metrics import ValidationMetrics
 
@@ -29,11 +30,40 @@ def load_config():
     config_path = Path(__file__).parent / "config.yaml"
     if config_path.exists():
         with open(config_path, 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
-    return {
-        "classifier": {"use_gpu": False, "batch_size": 32},
-        "api": {"host": "127.0.0.1", "port": 8005}
-    }
+            config = yaml.safe_load(f)
+    else:
+        config = {
+            "classifier": {"use_gpu": False, "batch_size": 32},
+            "api": {"host": "127.0.0.1", "port": 8005}
+        }
+
+    classifier_cfg = config.setdefault("classifier", {})
+    variant_from_env = os.getenv("QUESTIONS_CLASSIFIER_MODEL_VARIANT")
+    if variant_from_env:
+        classifier_cfg["model_variant"] = variant_from_env
+
+    variants = classifier_cfg.get("model_variants", {})
+    active_variant = classifier_cfg.get("model_variant")
+    if active_variant and active_variant in variants:
+        variant_cfg = variants[active_variant] or {}
+
+        for key in ("model_name", "provider", "approach", "use_gpu", "quantize"):
+            if key in variant_cfg:
+                classifier_cfg[key] = variant_cfg[key]
+
+        if "generation_config" in variant_cfg and variant_cfg["generation_config"] is not None:
+            classifier_cfg["generation_config"] = variant_cfg["generation_config"]
+        elif "generation_config" in classifier_cfg and classifier_cfg.get("approach") != "llm_generation":
+            classifier_cfg.pop("generation_config", None)
+
+    if "model_name" not in classifier_cfg:
+        classifier_cfg["model_name"] = "pritamdeka/S-PubMedBert-MS-MARCO"
+    if "provider" not in classifier_cfg:
+        classifier_cfg["provider"] = "huggingface"
+    if "approach" not in classifier_cfg:
+        classifier_cfg["approach"] = "sentence_bert"
+
+    return config
 
 config = load_config()
 
@@ -123,13 +153,23 @@ manager = ConnectionManager()
 
 # Initialize components
 classifier_config = config.get("classifier", {})
-classifier = QuestionsClassifier(
+classifier = QuestionsClassifierV2(
+    config_path=str(Path(__file__).parent / "config.yaml"),
+    model_name=classifier_config.get("model_name"),
+    approach=classifier_config.get("approach", "auto"),
     use_gpu=classifier_config.get("use_gpu", False),
-    quantize=classifier_config.get("quantize", False)
+    quantize=classifier_config.get("quantize", False),
+    requires_auth=classifier_config.get("requires_auth"),
+    random_seed=classifier_config.get("random_seed")
 )
 qdrant_storage = QdrantStorage(str(DB_DIR))
 validation_metrics = ValidationMetrics()
 
+logger.info(
+    "Classifier initialized with variant '%s' (%s)",
+    classifier_config.get("model_variant", "pubmedbert_sbert"),
+    classifier_config.get("model_name"),
+)
 logger.info(f"Classifier info: {classifier.get_model_info()}")
 
 

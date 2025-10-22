@@ -1,54 +1,55 @@
-# Конфигурация Aging Theory Classifier Service
+# Aging Theory Classifier Service configuration
 
-# Режим классификации
 classifier:
-  # Режимы: "keyword" | "bioformer" | "hybrid"
-  # keyword - только keyword matching (быстро, ~100 статей/сек)
-  # bioformer - только Bioformer-8L (точно, ~5-50 статей/сек)
-  # hybrid - гибридный подход (оптимально, ~30-80 статей/сек)
-  mode: "keyword"  # Начинаем с keyword для совместимости
+  mode: "embedding"  # keyword | embedding | hybrid | gpt4o
+  model_variant: "pubmedbert_sbert"
+  model_variants:
+    pubmedbert_sbert:
+      mode: "embedding"
+      embedding_model: "pritamdeka/S-PubMedBert-MS-MARCO"
+      bioformer_threshold: 0.6
+    gpt4o_mini:
+      mode: "gpt4o"
+      llm_model: "gpt-4o-mini"
+      llm_temperature: 0.0
+      llm_max_tokens: 256
 
-  # GPU настройки
-  use_gpu: true  # Использовать GPU если доступен
-  quantize: false  # Использовать int8 quantization для ускорения
+  use_gpu: true
+  quantize: false
+  bioformer_threshold: 0.6
+  embedding_threshold: 0.6
+  confidence_threshold: 0.5
+  batch_size: 32
+  max_workers: 2
+  embedding_model: "pritamdeka/S-PubMedBert-MS-MARCO"
+  llm_model: "gpt-4o-mini"
+  llm_temperature: 0.0
+  llm_max_tokens: 256
 
-  # Параметры классификации
-  bioformer_threshold: 0.6  # Порог similarity для Bioformer
-  confidence_threshold: 0.5  # Минимальная уверенность для классификации
-
-  # Batch processing
-  batch_size: 32  # Размер батча для GPU обработки
-  max_workers: 2  # Количество CPU worker'ов
-
-# База данных теорий
 theories:
-  count: 30  # Количество теорий в базе
-  auto_expand: false  # Автоматически искать вариации названий
-  min_pattern_length: 3  # Минимальная длина паттерна (символов)
+  count: 30
+  auto_expand: false
+  min_pattern_length: 3
 
-# Производительность
 performance:
-  max_text_length: 10000  # Максимальная длина текста (символов)
-  sliding_window_size: 512  # Размер окна для длинных текстов (токены)
-  sliding_window_stride: 256  # Шаг окна (токены)
-  cache_embeddings: true  # Кэшировать embeddings теорий
+  max_text_length: 10000
+  sliding_window_size: 512
+  sliding_window_stride: 256
+  cache_embeddings: true
 
-# Qdrant настройки
 qdrant:
   host: "localhost"
   port: 6333
   collection_name: "pubmed_papers"
-  batch_size: 10  # Размер батча для сохранения в Qdrant
+  batch_size: 10
 
-# Logging
 logging:
-  level: "INFO"  # DEBUG | INFO | WARNING | ERROR
+  level: "INFO"
   save_to_file: true
   log_file: "data/logs/classifier.log"
 
-# API настройки
 api:
   host: "127.0.0.1"
   port: 8004
-  reload: false  # Auto-reload при изменении кода
-  workers: 1  # Количество uvicorn worker'ов
+  reload: false
+  workers: 1

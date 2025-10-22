@@ -174,7 +174,7 @@ class QdrantStorage:
             updated_payload["is_aging_theory"] = classification_result.get("is_aging_theory", False)
             updated_payload["classification_confidence"] = classification_result.get("classification_confidence", 0.0)
             updated_payload["aging_theories"] = classification_result.get("aging_theories", [])
-            updated_payload["classification_model"] = classification_result.get("classification_model", "bioformer-8L")
+            updated_payload["classification_model"] = classification_result.get("classification_model", "pubmedbert-sbert")
             updated_payload["classification_timestamp"] = datetime.now().isoformat()
             updated_payload["classification_version"] = classification_result.get("classification_version", "1.0")
 
@@ -238,7 +238,7 @@ class QdrantStorage:
                         updated_payload["is_aging_theory"] = classification_result.get("is_aging_theory", False)
                         updated_payload["classification_confidence"] = classification_result.get("classification_confidence", 0.0)
                         updated_payload["aging_theories"] = classification_result.get("aging_theories", [])
-                        updated_payload["classification_model"] = classification_result.get("classification_model", "bioformer-8L")
+                        updated_payload["classification_model"] = classification_result.get("classification_model", "pubmedbert-sbert")
                         updated_payload["classification_timestamp"] = datetime.now().isoformat()
                         updated_payload["classification_version"] = classification_result.get("classification_version", "1.0")
 

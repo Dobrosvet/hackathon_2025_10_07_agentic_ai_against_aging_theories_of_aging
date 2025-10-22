@@ -1,100 +1,46 @@
-# PubMed Central Data Fetcher Microservice
+# PubMed Central Data Fetcher
 
-Микросервис для сбора списка URL научных статей из PubMed Central с использованием E-utilities API.
+## Overview
+This microservice discovers open-access PubMed Central (PMC) articles that match the baked-in aging query and stores their metadata in a Qdrant collection. The service exposes a FastAPI application with REST endpoints for lifecycle control and a WebSocket feed for live progress updates. It relies on the NCBI E-utilities API (`esearch.fcgi` and `esummary.fcgi`) and persists results in the shared `pubmed_papers` collection.
 
-## Функциональность
+Default search query (editable in `service_state["search_query"]`):  
+`(aging) AND (theory OR paradigm) OR Aging[MeSh] AND open_access[Filter]`
 
-- Поиск статей в PubMed Central по запросу: `(aging) AND (theory OR paradigm) OR (Aging[MeSh])`
-- Получение URL статей и базовых метаданных (через ESummary API)
-- Сохранение списка URL в векторную базу данных Qdrant
-- Логирование всех операций в `./data/logs`
-- Real-time мониторинг через WebSocket
-- REST API для управления процессом
+## Code structure
+| File | Responsibility |
+| --- | --- |
+| `main.py` | FastAPI service, background harvesting loop, WebSocket broadcasting, Qdrant orchestration |
+| `pubmed_fetcher.py` | Async client for E-utilities: full export of PMC IDs and batched metadata fetch |
+| `qdrant_storage.py` | Inserts metadata into `pubmed_papers`, generates deterministic 384-d hash embeddings, deduplicates existing IDs |
+| `pyproject.toml` | Poetry project definition and runtime dependencies |
 
-## Технологии
+Logs are written to `../data/logs` and the Qdrant client targets `http://localhost:6333` by default.
 
-- **FastAPI** - веб-фреймворк
-- **Uvicorn** - ASGI сервер
-- **Biopython** - работа с биологическими данными
-- **Qdrant** - векторная база данных
-- **WebSockets** - real-time коммуникация
-- **Poetry** - управление зависимостями
+## API surface
+### REST
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/` | Service status probe |
+| `GET` | `/api/status` | Current job state (`status`, `progress`, totals, errors, search query, etc.) |
+| `POST` | `/api/start` | Launch metadata harvesting in a background task |
+| `POST` | `/api/stop` | Request graceful stop of the running job |
 
-## Установка
-
-1. Убедитесь, что установлен Python 3.10+ и Poetry
-2. Установите зависимости:
-
-```bash
-cd data_a_get_urls_list_papers
-poetry install
-```
-
-## Запуск
-
-### Через run.ps1 (рекомендуется)
-
-Из корневой директории проекта:
-
-```powershell
-.\run.ps1
-```
-
-### Вручную
-
-```bash
-cd data_a_get_urls_list_papers
-poetry run python main.py
-```
-
-Сервис будет доступен на `http://127.0.0.1:8001`
-
-## API Endpoints
-
-### REST API
-
-- `GET /` - Информация о сервисе
-- `GET /api/status` - Текущий статус работы
-- `POST /api/start` - Запустить процесс скачивания
-- `POST /api/stop` - Остановить процесс
+All responses are JSON; `/api/status` mirrors the fields defined in `service_state`.
 
 ### WebSocket
+`/ws` streams JSON objects:
+- `{"type": "state", "data": {...}}` – current progress snapshot.
+- `{"type": "log", "data": {...}}` – individual log lines.
+- `{"type": "logs", "data": [...]}` – last 100 log entries on connect.
 
-- `WS /ws` - Real-time обновления логов и статистики
+Use the feed to power dashboards or CLI monitors without polling the REST endpoint.
 
-## Структура данных
-
-### State (статус сервиса)
-
-```json
-{
-  "status": "running",
-  "progress": 150,
-  "total": 1000,
-  "current_paper": "PMC123456",
-  "errors": 5,
-  "saved": 145,
-  "start_time": "2025-10-17T10:30:00",
-  "search_query": "(aging) AND (theory OR paradigm) OR (Aging[MeSh])"
-}
-```
-
-### Log Entry
-
-```json
-{
-  "timestamp": "2025-10-17T10:30:15",
-  "level": "INFO",
-  "message": "Fetching paper PMC123456 (150/1000)"
-}
-```
-
-### Paper Data (сохраняется в Qdrant)
-
+## Data written to Qdrant
+Each paper is stored as:
 ```json
 {
   "pmc_id": "123456",
-  "title": "Article Title",
+  "title": "...",
   "authors": ["John Doe", "Jane Smith"],
   "source": "Journal Name",
   "pubdate": "2024-01-15",
@@ -105,64 +51,51 @@ poetry run python main.py
 }
 ```
 
-## Структура директорий
+The vector is a 384-d normalised hash of the title (or PMC ID fallback). `qdrant_storage.get_existing_ids()` protects against re-ingesting already processed PMC IDs.
 
-```
-data_a_get_urls_list_papers/
-├── main.py                 # Основное приложение FastAPI
-├── pubmed_fetcher.py       # Модуль работы с PubMed API
-├── qdrant_storage.py       # Модуль работы с Qdrant
-├── pyproject.toml          # Poetry конфигурация
-├── poetry.lock             # Зафиксированные версии зависимостей
-└── README.md               # Документация
-
-./data/
-├── db/                     # Qdrant база данных
-└── logs/                   # Логи сервиса
+## Running locally
+```powershell
+cd data_a_get_urls_list_papers
+poetry install
+poetry run python main.py
 ```
 
-## WebSocket Protocol
+The service listens on `http://127.0.0.1:8002`. Make sure a Qdrant instance is up (`docker run qdrant/qdrant` or equivalent). Stop the process with `Ctrl+C`; the background task also honours `POST /api/stop`.
 
-Клиент получает сообщения трех типов:
+### Health check
+```powershell
+Invoke-RestMethod http://127.0.0.1:8002/api/status | ConvertTo-Json -Depth 5
+```
 
-1. **log** - Новая запись в логе
-   ```json
-   {
-     "type": "log",
-     "data": {
-       "timestamp": "2025-10-17T10:30:15",
-       "level": "INFO",
-       "message": "..."
-     }
-   }
-   ```
+### Sample WebSocket consumer (PowerShell)
+```powershell
+poetry run python - <<'PY'
+import asyncio, websockets, json
+async def watch():
+    async with websockets.connect("ws://127.0.0.1:8002/ws") as ws:
+        while True:
+            print(json.loads(await ws.recv()))
+asyncio.run(watch())
+PY
+```
 
-2. **state** - Обновление статуса
-   ```json
-   {
-     "type": "state",
-     "data": { /* статус сервиса */ }
-   }
-   ```
+## Dependencies
+Declared in `pyproject.toml`:
+- FastAPI 0.119 for the HTTP surface.
+- Uvicorn (with `standard` extras) as the ASGI runner.
+- `httpx` for async E-utilities access.
+- `qdrant-client` for persistence.
+- `websockets`, `python-multipart`, and Biopython (the latter is available for future sequence utilities, not currently imported).
 
-3. **logs** - Пакет логов (при подключении)
-   ```json
-   {
-     "type": "logs",
-     "data": [ /* массив логов */ ]
-   }
-   ```
+Install them via `poetry install`; do not run the service outside the Poetry environment.
 
-## Мониторинг
+## Rate limiting & API etiquette
+- `PubMedFetcher` adds a 0.5s pause between `esearch` batches and a 0.34s pause before every `esummary` call to respect the documented 3 requests/second limit.
+- A single retry is performed on HTTP 429 responses. Subsequent failures are logged and the batch is skipped.
+- All metadata requests are JSON (`retmode=json`); full text is not downloaded here (see microservice B).
 
-Используйте Dashboard в браузере для мониторинга:
-- Левая колонка: Real-time логи
-- Правая колонка: Статистика и управление
-
-## Примечания
-
-- E-utilities API имеет ограничения по частоте запросов (не более 3 в секунду без API ключа)
-- Для больших датасетов рекомендуется использовать API ключ NCBI
-- Векторные эмбеддинги создаются детерминированно на основе хеша текста (для production используйте настоящую модель эмбеддингов)
-- Сервис собирает только URL и метаданные, полные тексты статей не скачиваются (легкий и быстрый режим)
-- Для получения полных текстов используйте собранные URL в других сервисах
+## Operational notes
+- The search query is stored in `service_state` and included in `/api/status` responses.
+- Counters (`saved`, `errors`, `skipped`, `db_count`) track Qdrant writes and existing records.
+- Logs and states are capped (1000 log entries) to avoid unbounded memory.
+- Calling `/api/start` while a job is active returns an error; `/api/stop` flips the status to `stopped`, which the background loop checks before writing new batches.
