@@ -168,7 +168,12 @@ logger.info(
     classifier_config.get("mode", "embedding"),
     classifier_config.get("model_variant", "pubmedbert_sbert"),
 )
-logger.info(f"Classifier info: {classifier.get_model_info()}")
+try:
+    classifier_info = classifier.get_model_info()
+except Exception as exc:
+    logger.warning("Failed to collect classifier info at startup: %s", exc)
+    classifier_info = {"error": str(exc)}
+logger.info(f"Classifier info: {classifier_info}")
 
 
 async def log_and_broadcast(message: str, level: str = "INFO"):

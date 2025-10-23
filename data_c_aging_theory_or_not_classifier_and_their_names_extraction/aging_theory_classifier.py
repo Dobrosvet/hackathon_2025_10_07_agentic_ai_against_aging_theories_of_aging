@@ -425,7 +425,11 @@ class AgingTheoryClassifier:
         }
 
         if self.bioformer:
-            info["embedding_model"] = self.bioformer.get_model_info()
+            try:
+                info["embedding_model"] = self.bioformer.get_model_info()
+            except Exception as exc:
+                logger.warning("Failed to fetch embedding model info: %s", exc)
+                info["embedding_model_error"] = str(exc)
 
         if self.mode == "gpt4o":
             info["llm_model_name"] = self.llm_model_name

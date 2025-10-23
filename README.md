@@ -9,6 +9,14 @@ Stack:
 - Backend: Python, FastAPI, PyTorch, Transformers, LLM, PubMed Central E-utilities API
 - DB: Qdrant
 
+- [Slides](https://docs.google.com/presentation/d/1YATZ74Ff4QKPfgs7Ao7qAWrvihIa04ggTFM8LI9PGuA/edit?usp=sharing)
+
+## Result files
+
+- [Table 1](aging_theories_table1_theories_20251023_051756.csv)
+- [Table 2](aging_theories_table2_papers_20251023_052102.csv)
+- [Table 3](aging_theories_table3_analysis_20251023_052235.csv)
+
 ## Requirements
 
 - OS: Windows.

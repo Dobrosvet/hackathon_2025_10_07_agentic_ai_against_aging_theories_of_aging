@@ -82,8 +82,14 @@ class PubmedBertClassifier:
         if self.max_length:
             self.model.max_seq_length = self.max_length
 
-        self._precompute_theory_embeddings()
+        # mark as initialized before precomputing to avoid recursive initialization
         self._initialized = True
+        try:
+            self._precompute_theory_embeddings()
+        except Exception:
+            self._initialized = False
+            raise
+
         logger.info("PubMedBERT model loaded successfully")
 
     def _precompute_theory_embeddings(self) -> None:
@@ -317,26 +323,32 @@ class PubmedBertClassifier:
 
         return unique
 
-    def get_model_info(self) -> Dict[str, Any]:
-        """Return model metadata."""
-        self._initialize()
+    def get_model_info(self, force_initialize: bool = False) -> Dict[str, Any]:
+        """Return model metadata without forcing heavy initialization by default."""
+        if force_initialize and not self._initialized:
+            try:
+                self._initialize()
+            except Exception as exc:
+                logger.warning("Failed to eagerly initialize PubMedBERT: %s", exc)
 
         info = {
             "model_name": self.model_name,
             "initialized": self._initialized,
             "batch_size": self.batch_size,
             "max_length": self.max_length,
-            "device": str(self.device),
+            "device": str(self.device) if self.device else None,
         }
 
-        try:
-            import torch
+        if self._initialized:
+            try:
+                import torch
 
-            if self.device and self.device.type == "cuda":
-                info["gpu_name"] = torch.cuda.get_device_name(0)
-                info["gpu_memory"] = f"{torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB"
-        except Exception:
-            logger.debug("Failed to fetch GPU information", exc_info=True)
+                if self.device and self.device.type == "cuda":
+                    info["gpu_name"] = torch.cuda.get_device_name(0)
+                    gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1e9
+                    info["gpu_memory"] = f"{gpu_memory:.2f} GB"
+            except Exception:
+                logger.debug("Failed to fetch GPU information", exc_info=True)
 
         return info
 

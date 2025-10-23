@@ -2886,23 +2886,31 @@ class QuestionsClassifierV2:
         logger.info("Classification complete")
         return results
 
-    def get_model_info(self) -> Dict[str, Any]:
-        """Get model information"""
-        self._initialize()
-
-        import torch
+    def get_model_info(self, force_initialize: bool = False) -> Dict[str, Any]:
+        """Return model metadata without forcing heavy initialization by default."""
+        if force_initialize and not self._initialized:
+            try:
+                self._initialize()
+            except Exception as exc:
+                logger.warning("Failed to eagerly initialize questions classifier: %s", exc)
 
         info = {
             "model_name": self.model_name,
             "approach": self.approach,
-            "device": str(self.device),
+            "device": str(self.device) if self.device else None,
             "initialized": self._initialized,
             "num_questions": len(self.questions),
-            "num_criteria": len(self.criteria)
+            "num_criteria": len(self.criteria),
         }
 
-        if self._initialized and torch.cuda.is_available():
-            info["gpu_name"] = torch.cuda.get_device_name(0)
+        if self._initialized:
+            try:
+                import torch
+
+                if self.device and self.device.type == "cuda":
+                    info["gpu_name"] = torch.cuda.get_device_name(0)
+            except Exception:
+                logger.debug("Failed to collect GPU info for questions classifier", exc_info=True)
 
         return info
 
